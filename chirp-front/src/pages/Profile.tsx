@@ -1,6 +1,6 @@
-import { useState } from 'react' // Добавляем useState
+import { useEffect, useState } from 'react' // Добавляем useState
 import { MapPin, Calendar, Link as LinkIcon, Edit3, Image as ImageIcon, Heart, MessageSquare } from 'lucide-react'
-import { Users } from '../types/userTypes';
+import type { Users } from '../types/userTypes';
 
 const Profile = () => {
   // Состояние для активного таба

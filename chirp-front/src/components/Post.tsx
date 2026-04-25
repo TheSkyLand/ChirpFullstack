@@ -9,7 +9,8 @@ const Post = (props: PostProps) => {
     return(
         
         <div>
-            
+            {props.content}
+            {props.title}
         </div>
     )
 }
