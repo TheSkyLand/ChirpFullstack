@@ -8,18 +8,20 @@ import Home from './pages/Home'
 import App from './App'
 import Profile from './pages/Profile'
 import Notifications from './pages/Notification'
+import Explore from './pages/Explore'
+import Feed from './pages/Feed'
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />, // Главная обертка
     children: [
-      {
-        path: "/home", // Путь "/" внутри App
-        element: <Home />,
+            {
+        path: "/", // Путь "/" внутри App
+        element: <Feed />,
       },
       {
-        path: "/about",
+        path: "/home", // Путь "/" внутри App
         element: <Home />,
       },
       {
@@ -28,7 +30,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/explore",
-        element: <Home />,
+        element: <Explore />,
       },      {
         path: "/notifications",
         element: <Notifications />,

@@ -1,51 +1,67 @@
 import { useState } from 'react'
 import { Heart, UserPlus, MessageCircle, AtSign } from 'lucide-react'
 
+// --- ЗАГЛУШКИ (Понятные поля для будущих Types) ---
+const DUMMY_NOTIFICATIONS = [
+  {
+    id: 1,
+    type: 'like',
+    userName: 'Анна Смирнова',
+    userAvatar: 'А', // В будущем здесь будет ссылка на фото
+    content: 'понравился ваш пост "Tailwind v4 — это пушка!"',
+    targetId: 'post_123', // ID поста, который лайкнули
+    time: '12м',
+    unread: true
+  },
+  {
+    id: 2,
+    type: 'follow',
+    userName: 'Максим Петров',
+    userAvatar: 'М',
+    content: 'подписался на вас',
+    targetId: 'user_456', // ID юзера, который подписался
+    time: '2ч',
+    unread: false
+  },
+  {
+    id: 3,
+    type: 'reply',
+    userName: 'CodeMaster',
+    userAvatar: 'C',
+    content: 'ответил: "Согласен, сборка стала в разы быстрее!"',
+    targetId: 'post_123',
+    time: '5ч',
+    unread: false
+  },
+  {
+    id: 4,
+    type: 'mention',
+    userName: 'TechNews',
+    userAvatar: 'T',
+    content: 'упомянул вас в обсуждении архитектуры',
+    targetId: 'post_789',
+    time: '1д',
+    unread: false
+  }
+];
+
 const Notifications = () => {
   const [filter, setFilter] = useState('Все');
 
-  const notifications = [
-    {
-      id: 1,
-      type: 'like',
-      user: 'Анна Смирнова',
-      content: 'понравился ваш пост "Tailwind v4 — это пушка!"',
-      time: '12м',
-      icon: <Heart className="text-red-500 fill-red-500" size={18} />,
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'follow',
-      user: 'Максим Петров',
-      content: 'подписался на вас',
-      time: '2ч',
-      icon: <UserPlus className="text-blue-500" size={18} />,
-      unread: false
-    },
-    {
-      id: 3,
-      type: 'reply',
-      user: 'CodeMaster',
-      content: 'ответил: "Согласен, сборка стала в разы быстрее!"',
-      time: '5ч',
-      icon: <MessageCircle className="text-green-500" size={18} />,
-      unread: false
-    },
-    {
-      id: 4,
-      type: 'mention',
-      user: 'TechNews',
-      content: 'упомянул вас в обсуждении архитектуры',
-      time: '1д',
-      icon: <AtSign className="text-purple-500" size={18} />,
-      unread: false
+  // Хелпер для иконок (чтобы не хранить JSX в массиве данных)
+  const getIcon = (type : string) => {
+    switch (type) {
+      case 'like': return <Heart className="text-red-500 fill-red-500" size={18} />;
+      case 'follow': return <UserPlus className="text-blue-500" size={18} />;
+      case 'reply': return <MessageCircle className="text-green-500" size={18} />;
+      case 'mention': return <AtSign className="text-purple-500" size={18} />;
+      default: return null;
     }
-  ];
+  };
 
   const filteredNotifs = filter === 'Упоминания' 
-    ? notifications.filter(n => n.type === 'mention' || n.type === 'reply')
-    : notifications;
+    ? DUMMY_NOTIFICATIONS.filter(n => n.type === 'mention' || n.type === 'reply')
+    : DUMMY_NOTIFICATIONS;
 
   return (
     <div className="bg-white min-h-screen">
@@ -82,12 +98,14 @@ const Notifications = () => {
                 n.unread ? 'bg-blue-50/30' : ''
               }`}
             >
-              <div className="mt-1">{n.icon}</div>
+              <div className="mt-1">{getIcon(n.type)}</div>
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border border-gray-100" />
-                    <span className="font-bold text-sm text-slate-900 hover:underline">{n.user}</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-blue-400 border border-blue-100">
+                      {n.userAvatar}
+                    </div>
+                    <span className="font-bold text-sm text-slate-900 hover:underline">{n.userName}</span>
                   </div>
                   <span className="text-xs text-gray-400">{n.time}</span>
                 </div>
@@ -110,4 +128,4 @@ const Notifications = () => {
   )
 }
 
-export default Notifications
+export default Notifications;
