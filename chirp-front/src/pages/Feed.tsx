@@ -1,4 +1,4 @@
-import { Image, Send, MessageSquare, Heart, Share2 } from 'lucide-react'
+import { Image, Send } from 'lucide-react'
 import Post from '../components/Post';
 
 // --- ЗАГЛУШКИ ДЛЯ ЛЕНТЫ ---

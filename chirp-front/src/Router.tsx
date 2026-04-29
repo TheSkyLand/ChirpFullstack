@@ -4,37 +4,43 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 
 // Импортируем страницы
-import Home from './pages/Home'
-import App from './App'
 import Profile from './pages/Profile'
 import Notifications from './pages/Notification'
 import Explore from './pages/Explore'
 import Feed from './pages/Feed'
+import Layout from './layouts/Layout' // Тот самый код, что мы писали
+import RegisterPage from './pages/RegisterPage'
+import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />, // Главная обертка
+    element: <Layout />, // Теперь это главная точка входа с нашими стилями
     children: [
-            {
-        path: "/", // Путь "/" внутри App
+      {
+        index: true,     // Вместо path: "/" используем index: true
         element: <Feed />,
       },
       {
-        path: "/home", // Путь "/" внутри App
-        element: <Home />,
-      },
-      {
-        path: "/profile",
+        path: "profile",
         element: <Profile />,
       },
       {
-        path: "/explore",
+        path: "explore",
         element: <Explore />,
-      },      {
-        path: "/notifications",
+      },
+      {
+        path: "notifications",
         element: <Notifications />,
       },
+      {
+        path: "register",
+        element: <RegisterPage />,
+      },
+      {
+        path: "login",
+        element: <LoginPage />
+      }
     ],
   },
 ]);

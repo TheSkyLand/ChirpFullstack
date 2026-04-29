@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapPin, Calendar, Link as LinkIcon, Edit3, Image as ImageIcon, Heart, MessageSquare } from 'lucide-react'
+import { Link as Edit3, Image as ImageIcon, Heart, MessageSquare } from 'lucide-react'
 
 // --- ЗАГЛУШКИ (Твои будущие данные из БД) ---
 const DUMMY_POSTS = [

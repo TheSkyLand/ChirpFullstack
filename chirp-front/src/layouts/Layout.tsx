@@ -1,99 +1,106 @@
-import { Bell, Home, PlusSquare, Search, User, LogIn } from "lucide-react" // Добавил LogIn
-import { Link, Outlet, useLocation } from "react-router-dom"
-import { useAuthStore } from "../store/useAuthStore" // Импортируем наш стор
+import { Search, Bell, User, Home, Hash, Bookmark, MessageSquare, LogOut } from "lucide-react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { observer } from "mobx-react-lite"; // 1. Импортируем observer
+import { authStore } from "../store/AuthStore"; // 2. Импортируем экземпляр стора (с маленькой буквы)
 
-const Layout = () => {
+const Layout = observer(() => { // 3. Оборачиваем в observer
     const location = useLocation();
-
-    // 1. Достаем состояние из Zustand
-    const { isAuthenticated, user } = useAuthStore();
-    console.log("Статус входа:", isAuthenticated); // Добавь это
+    
+    // 4. Достаем данные напрямую из объекта стора
+    const { isAuthenticated, user, logout } = authStore;
 
     const linkClass = (path: string) =>
-        `flex items-center gap-3 p-3 rounded-full transition-all ${location.pathname === path
-            ? 'font-bold text-blue-600 bg-blue-50'
-            : 'hover:bg-gray-100 text-slate-700'
+        `flex items-center gap-4 p-3 rounded-full transition-all duration-200 ${
+            location.pathname === path
+                ? 'font-black text-blue-600 bg-blue-50'
+                : 'hover:bg-gray-100 text-slate-800'
         }`;
 
     return (
         <div className="min-h-screen bg-white">
-            <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link to="/" className="text-2xl font-black tracking-tighter text-blue-600">
-                        CHIRP
-                    </Link>
+            <header className="fixed top-0 w-full z-50 border-b bg-white/80 backdrop-blur-md h-16">
+                <div className="max-w-[1400px] mx-auto h-full px-4 flex items-center">
+                    <div className="flex-1">
+                        <Link to="/" className="text-2xl font-black text-blue-600 tracking-tighter">CHIRP</Link>
+                    </div>
 
-                    {/* ПОИСК (скрываем, если не залогинен, чтобы не захламлять) */}
-                    <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <div className="hidden md:flex flex- items-center relative w-full max-w-md">
+                        <Search className="absolute left-4 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Поиск..."
-                            className="w-full bg-gray-100 rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Поиск по Chirp..."
+                            className="w-full bg-gray-100 rounded-full py-2.5 pl-12 pr-4 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all border border-transparent focus:border-blue-500"
                         />
                     </div>
 
-                    <nav className="flex items-center gap-2">
-                        <Link to="/" className="p-2 hover:bg-gray-100 rounded-full"><Home /></Link>
-
-                        {/* 2. ПРОВЕРКА: Если залогинен — показываем колокольчик и аватар */}
-                        {isAuthenticated ? (
+                    <div className="flex-1 flex justify-end gap-3">
+                        {!isAuthenticated ? (
                             <>
-                                <Link to="/notifications" className="p-2 hover:bg-gray-100 rounded-full relative">
-                                    <Bell />
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border border-white" />
-                                </Link>
-                                <Link to="/profile" className="ml-2 w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold overflow-hidden border-2 border-transparent hover:border-blue-200 transition-all">
-                                    {/* Если на бэке есть аватарка, можно вставить <img>, если нет — первую букву */}
-                                    {user?.username?.[0].toUpperCase() || <User size={20} />}
-                                </Link>
+                                <Link to="/login" className="px-4 py-2 font-bold text-slate-700 hover:text-blue-600 transition-colors">Войти</Link>
+                                <Link to="/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95">Регистрация</Link>
                             </>
                         ) : (
-                            // Если НЕ залогинен — кнопка входа
-                            <Link to="/login" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:bg-blue-700 transition-all">
-                                <LogIn size={18} /> <span>Войти</span>
-                            </Link>
+                            <div className="flex items-center gap-4">
+                                <Link to="/notifications" className="p-2 text-slate-600 hover:bg-gray-100 rounded-full relative">
+                                    <Bell size={22} />
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                                </Link>
+                                <Link to="/profile" className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold overflow-hidden border border-gray-100">
+                                    {/* Безопасное отображение первой буквы */}
+                                    {user?.username ? user.username[0].toUpperCase() : <User size={20} />}
+                                </Link>
+                            </div>
                         )}
-                    </nav>
+                    </div>
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto flex gap-8 px-4 py-6">
-
-                {/* ЛЕВАЯ КОЛОНКА (скрываем часть ссылок для гостей) */}
-                <aside className="hidden lg:flex flex-col gap-2 w-64 h-fit sticky top-24">
-                    <Link to="/" className={linkClass('/')}><Home size={24} /> Главная</Link>
-                    <Link to="/explore" className={linkClass('/explore')}><Search size={24} /> Обзор</Link>
-
-                    {isAuthenticated && (
-                        <>
-                            <Link to="/notifications" className={linkClass('/notifications')}><Bell size={24} /> Уведомления</Link>
-                            <Link to="/profile" className={linkClass('/profile')}><User size={24} /> Профиль</Link>
-                            <button className="mt-4 bg-blue-500 text-white p-4 rounded-2xl font-bold hover:bg-blue-600 flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
-                                <PlusSquare size={20} /> Создать пост
-                            </button>
-                        </>
-                    )}
+            <main className="max-w-[1400px] mx-auto pt-16 flex justify-between gap-4 px-4">
+                <aside className="hidden lg:flex flex-col gap-1 w-64 shrink-0 sticky top-16 h-[calc(100vh-64px)] py-4">
+                    <nav className="flex flex-col gap-1">
+                        <Link to="/" className={linkClass('/')}><Home size={26} /> <span className="text-lg">Главная</span></Link>
+                        <Link to="/explore" className={linkClass('/explore')}><Hash size={26} /> <span className="text-lg">Обзор</span></Link>
+                        
+                        {isAuthenticated && (
+                            <>
+                                <Link to="/messages" className={linkClass('/messages')}><MessageSquare size={26} /> <span className="text-lg">Сообщения</span></Link>
+                                <Link to="/bookmarks" className={linkClass('/bookmarks')}><Bookmark size={26} /> <span className="text-lg">Закладки</span></Link>
+                                <Link to="/profile" className={linkClass('/profile')}><User size={26} /> <span className="text-lg">Профиль</span></Link>
+                                
+                                <button className="mt-4 w-full bg-blue-500 text-white py-3 rounded-full font-bold hover:bg-blue-600 shadow-lg transition-transform active:scale-95">
+                                    Опубликовать
+                                </button>
+                                
+                                <button 
+                                    onClick={() => logout()} 
+                                    className="mt-auto mb-4 flex items-center gap-3 p-3 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all"
+                                >
+                                    <LogOut size={24} /> <span className="font-medium">Выйти</span>
+                                </button>
+                            </>
+                        )}
+                    </nav>
                 </aside>
 
-                <section className="flex-1 min-w-0">
-                    <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden min-h-[80vh]">
-                        <Outlet />
-                    </div>
+                <section className="flex-grow max-w-[600px] border-x border-gray-100 min-h-screen bg-white">
+                    <Outlet />
                 </section>
 
-                {/* ПРАВАЯ КОЛОНКА */}
-                <aside className="hidden xl:block w-80 h-fit sticky top-24">
+                <aside className="hidden xl:block w-[350px] shrink-0 sticky top-16 h-fit py-4 pl-4">
                     <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                        <h3 className="font-black text-lg mb-4 text-slate-800">
-                            {isAuthenticated ? "Рекомендации" : "Популярное"}
-                        </h3>
-                        {/* ... твой список юзеров ... */}
+                        <h3 className="font-black text-xl mb-4 text-slate-800">Что нового</h3>
+                        <div className="space-y-4">
+                            <div className="cursor-pointer hover:opacity-70 text-sm">
+                                <p className="text-xs text-gray-500 italic">Тренды</p>
+                                <p className="font-bold">#MobXisLife</p>
+                                <p className="text-xs text-gray-500">1,204 постов</p>
+                            </div>
+                        </div>
                     </div>
                 </aside>
             </main>
         </div>
-    )
-}
+    );
+});
 
 export default Layout;

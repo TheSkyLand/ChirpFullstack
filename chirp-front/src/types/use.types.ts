@@ -9,3 +9,4 @@ export type userDto = {
     following: number,
     followers: number,
 }
+

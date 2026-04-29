@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { CrossIcon, LoaderIcon, UserPlus } from "lucide-react";
-import type { userDto } from "../types/userTypes";
-import axios from "axios";
+import type { userDto } from "../types/use.types";
 
 // --- ЗАГЛУШКИ (Понятные поля для будущих Users) ---
 const DUMMY_USERS = [
@@ -29,11 +28,11 @@ const Explore = () => {
             try {
                 setLoading(true);
                 //await new Promise(resolve => setTimeout(resolve, 600));
-                const response = await axios.get('/api/users');
+                //const response = await axios.get('/api/users');
                 setData(DUMMY_USERS);
 
             } catch (err) {
-                setError('Ошибка при загрузке данных');
+                setError(String(err));
             } finally {
                 setLoading(false);
             }
