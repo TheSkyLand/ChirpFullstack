@@ -1,6 +1,6 @@
 import { api } from "../.."
 import type { loginDto, resLoginDto } from "../../../types/auth/login.types"
-import { type registerDto } from "../../../types/auth/register.types"
+import type { resRegisterDto, registerDto } from "../../../types/auth/register.types"
 
 
 
@@ -11,6 +11,6 @@ export const AuthController = {
     },
     
     register: (data: registerDto) => {
-        return api.post('/api/v1/auth/register', data)
+        return api.post<resRegisterDto>('/api/v1/auth/register', data)
     }
 } 

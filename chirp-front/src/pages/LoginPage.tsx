@@ -1,31 +1,46 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { AuthController } from '../api/controllers/auth/authController';
-
+import type { ApiError } from '../types/error-api/error-api.types';
+import { codeResponseError } from '../utils/api-responses/api-responses';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
-        username: '',
+        login: '',
         password: '',
     });
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Данные для бэка:', formData);
+        setError(''); // Сбрасываем ошибку перед новым запросом
 
         AuthController.login(formData)
             .then((response) => {
-                console.log(response)
+                if (response.data.token) {
+                    localStorage.setItem('token', response.data.token)
+                    localStorage.setItem('userId', String(response.data.userId))
+                    localStorage.setItem('username', response.data.username)
+
+                    console.log("success!", response.data)
+                    navigate('/dashboard'); // Добавил переход после успеха
+                }
             })
+            .catch(err => {
+                const errorData = err as ApiError;
+                if (errorData.response?.status) {
+                    setError(codeResponseError(errorData.response.status));
+                } else {
+                    setError('Ошибка подключения к серверу');
+                }
+            });
     };
-
-
-
 
     return (
         <div className="flex items-center justify-center py-20 px-4">
-            <div className="w-full max-w-md bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-50/50 p-8">
+            <div className="w-full bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-50/50 p-8">
 
                 {/* Лого и Заголовок */}
                 <div className="text-center mb-10">
@@ -37,14 +52,26 @@ const LoginPage = () => {
                 </div>
 
                 <form className="space-y-5" onSubmit={handleSubmit}>
+                    
+                    {/* Блок Ошибки — вписывается в стиль форм */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-sm font-semibold animate-in fade-in slide-in-from-top-1">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Поле Email */}
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-slate-700 ml-1">Email</label>
                         <div className="relative group">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                             <input
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, login: e.target.value });
+                                    if(error) setError(''); // Убираем ошибку, когда юзер начал исправлять
+                                }}
                                 type="email"
+                                required
                                 placeholder="name@example.com"
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
@@ -60,8 +87,12 @@ const LoginPage = () => {
                         <div className="relative group">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                             <input
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, password: e.target.value });
+                                    if(error) setError('');
+                                }}
                                 type="password"
+                                required
                                 placeholder="••••••••"
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
