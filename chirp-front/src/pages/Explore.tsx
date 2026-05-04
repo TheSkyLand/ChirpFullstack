@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CrossIcon, LoaderIcon, UserPlus } from "lucide-react";
-import type { userDto } from "../types/use.types";
+import type { userDto } from "../types/user.types";
 
 // --- ЗАГЛУШКИ (Понятные поля для будущих Users) ---
 const DUMMY_USERS = [

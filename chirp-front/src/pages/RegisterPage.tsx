@@ -4,6 +4,7 @@ import { User, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
 import { AuthController } from '../api/controllers/auth/authController';
 import type { ApiError } from '../types/error-api/error-api.types';
 import { codeResponseError } from '../utils/api-responses/api-responses';
+import { authStore } from '../store/AuthStore';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -24,9 +25,7 @@ const RegisterPage = () => {
       .then((response) => {
         // Если бэк сразу отдает токен после регистрации
         if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('userId', String(response.data.userId));
-          localStorage.setItem('username', response.data.username);
+          authStore.login(response.data.token);
           
           console.log("Регистрация успешна!", response.data);
           navigate('/'); // Или на '/'

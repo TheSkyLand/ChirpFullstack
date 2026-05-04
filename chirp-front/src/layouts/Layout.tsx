@@ -1,19 +1,22 @@
 import { Search, Bell, User, Home, Hash, Bookmark, MessageSquare, LogOut } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite"; // 1. Импортируем observer
 import { authStore } from "../store/AuthStore"; // 2. Импортируем экземпляр стора (с маленькой буквы)
 
 const Layout = observer(() => { // 3. Оборачиваем в observer
     const location = useLocation();
-    
-    // 4. Достаем данные напрямую из объекта стора
+    const navigate = useNavigate(); // Инициализируй хук
     const { isAuthenticated, user, logout } = authStore;
 
+    const handleLogout = () => {
+        logout(); // Очищаем стор и localStorage
+        navigate('/login'); // Редиректим
+    };
+
     const linkClass = (path: string) =>
-        `flex items-center gap-4 p-3 rounded-full transition-all duration-200 ${
-            location.pathname === path
-                ? 'font-black text-blue-600 bg-blue-50'
-                : 'hover:bg-gray-100 text-slate-800'
+        `flex items-center gap-4 p-3 rounded-full transition-all duration-200 ${location.pathname === path
+            ? 'font-black text-blue-600 bg-blue-50'
+            : 'hover:bg-gray-100 text-slate-800'
         }`;
 
     return (
@@ -57,22 +60,22 @@ const Layout = observer(() => { // 3. Оборачиваем в observer
 
             <main className="max-w-[1400px] mx-auto pt-16 flex justify-between gap-4 px-4">
                 <aside className="hidden lg:flex flex-col gap-1 w-64 shrink-0 sticky top-16 h-[calc(100vh-64px)] py-4">
-                    <nav className="flex flex-col gap-1">
+                    <nav className="flex flex-col gap-1 h-full"> 
                         <Link to="/" className={linkClass('/')}><Home size={26} /> <span className="text-lg">Главная</span></Link>
                         <Link to="/explore" className={linkClass('/explore')}><Hash size={26} /> <span className="text-lg">Обзор</span></Link>
-                        
+
                         {isAuthenticated && (
                             <>
                                 <Link to="/messages" className={linkClass('/messages')}><MessageSquare size={26} /> <span className="text-lg">Сообщения</span></Link>
                                 <Link to="/bookmarks" className={linkClass('/bookmarks')}><Bookmark size={26} /> <span className="text-lg">Закладки</span></Link>
                                 <Link to="/profile" className={linkClass('/profile')}><User size={26} /> <span className="text-lg">Профиль</span></Link>
-                                
+
                                 <button className="mt-4 w-full bg-blue-500 text-white py-3 rounded-full font-bold hover:bg-blue-600 shadow-lg transition-transform active:scale-95">
                                     Опубликовать
                                 </button>
-                                
-                                <button 
-                                    onClick={() => logout()} 
+
+                                <button
+                                    onClick={handleLogout} // Используем обертку
                                     className="mt-auto mb-4 flex items-center gap-3 p-3 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all"
                                 >
                                     <LogOut size={24} /> <span className="font-medium">Выйти</span>
