@@ -1,43 +1,37 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Добавил useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
 import { AuthController } from '../api/controllers/auth/authController';
 import type { ApiError } from '../types/error-api/error-api.types';
 import { codeResponseError } from '../utils/api-responses/api-responses';
 import { authStore } from '../store/AuthStore';
+import { observer } from 'mobx-react-lite';
 
-const RegisterPage = () => {
+const RegisterPage = observer(() => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
   });
-  
-  const [error, setError] = useState(''); // Стейт для ошибки
+
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Сброс перед запросом
-    console.log('Данные для бэка:', formData);
+    setError('');
 
     AuthController.register(formData)
       .then((response) => {
-        // Если бэк сразу отдает токен после регистрации
         if (response.data.token) {
           authStore.login(response.data.token);
-          
-          console.log("Регистрация успешна!", response.data);
-          navigate('/'); // Или на '/'
+          navigate('/');
         } else {
-          // Если бэк не логинит сразу, просто отправляем на логин
           navigate('/login');
         }
       })
       .catch(err => {
         const errorData = err as ApiError;
-        console.error('Ошибка регистрации:', errorData);
-
         if (errorData.response?.status) {
           setError(codeResponseError(errorData.response.status));
         } else {
@@ -50,7 +44,8 @@ const RegisterPage = () => {
 
   return (
     <div className="flex items-center justify-center py-10 px-4">
-      <div className="w-full bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-50/50 p-8">
+      {/* Добавил max-w-md здесь для идентичности с логином */}
+      <div className="w-full max-w-md bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-50/50 p-8">
 
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl mb-4 text-blue-600">
@@ -61,15 +56,12 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Блок Ошибки — такой же, как в логине */}
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-sm font-semibold animate-in fade-in slide-in-from-top-1">
               {error}
             </div>
           )}
 
-          {/* Username */}
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-slate-700 ml-1">Имя пользователя</label>
             <div className="relative group">
@@ -81,13 +73,12 @@ const RegisterPage = () => {
                 className={inputStyle}
                 onChange={(e) => {
                   setFormData({ ...formData, username: e.target.value });
-                  if(error) setError('');
+                  if (error) setError('');
                 }}
               />
             </div>
           </div>
 
-          {/* Email */}
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-slate-700 ml-1">Email</label>
             <div className="relative group">
@@ -99,13 +90,12 @@ const RegisterPage = () => {
                 className={inputStyle}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
-                  if(error) setError('');
+                  if (error) setError('');
                 }}
               />
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-slate-700 ml-1">Пароль</label>
             <div className="relative group">
@@ -117,7 +107,7 @@ const RegisterPage = () => {
                 className={inputStyle}
                 onChange={(e) => {
                   setFormData({ ...formData, password: e.target.value });
-                  if(error) setError('');
+                  if (error) setError('');
                 }}
               />
             </div>
@@ -142,6 +132,6 @@ const RegisterPage = () => {
       </div>
     </div>
   );
-};
+});
 
 export default RegisterPage;

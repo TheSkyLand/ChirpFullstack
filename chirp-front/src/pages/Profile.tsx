@@ -1,55 +1,86 @@
-import { observer } from "mobx-react-lite"; // Важно для MobX
-
+import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { authStore } from "../store/AuthStore";
 
 const Profile = observer(() => {
   const [activeTab, setActiveTab] = useState('Посты');
-  
-  // Достаем данные пользователя из MobX
   const user = authStore.user;
 
-  // Если данные еще грузятся или пользователя нет
-  if (authStore.isLoading) return <div className="p-10 text-center">Загрузка профиля...</div>;
-  if (!user) return <div className="p-10 text-center">Войдите, чтобы увидеть профиль</div>;
+  if (authStore.isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 space-y-4">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-slate-500 font-bold">Чирпаем данные...</p>
+      </div>
+    );
+  }
 
-  const tabs = ['Посты', 'Медиа', 'Нравится'];
+  if (!user && !authStore.isLoading) {
+    return (
+      <div className="p-20 text-center">
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Войдите в аккаунт</h2>
+        <p className="text-slate-500 mt-2">Чтобы увидеть профиль, нужно авторизоваться.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">
-      {/* ... СИНЯЯ ШАПКА ... */}
-      
+      {/* Обложка */}
+      <div className="h-44 bg-gradient-to-tr from-blue-500 to-blue-300 relative" />
+
       <div className="px-6 pb-6 relative">
+        {/* Аватарка */}
         <div className="absolute -top-16 left-6">
-          <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-xl flex items-center justify-center overflow-hidden">
-             <div className="w-full h-full rounded-2xl bg-blue-100 flex items-center justify-center text-4xl font-bold text-blue-600">
-               {/* Используем первую букву имени из стора */}
-               {user.username[0].toUpperCase()}
+          <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-2xl flex items-center justify-center">
+             <div className="w-full h-full rounded-2xl bg-blue-50 flex items-center justify-center text-4xl font-black text-blue-600">
+               {user?.username ? user.username[0].toUpperCase() : '?'}
              </div>
           </div>
         </div>
 
-        {/* ... КНОПКА РЕДАКТИРОВАТЬ ... */}
+        {/* Кнопка редактирования */}
+        <div className="flex justify-end pt-4">
+          <button className="px-5 py-2 border-2 border-slate-100 rounded-full font-bold hover:bg-slate-50 transition-all text-sm">
+            Редактировать
+          </button>
+        </div>
 
+        {/* Инфо */}
         <div className="mt-8">
-          {/* Данные из твоего userDto */}
-          <h1 className="text-2xl font-black text-slate-900">{user.username}</h1>
-          <p className="text-gray-500">@{user.username.toLowerCase()}</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">{user?.username}</h1>
+          <p className="text-slate-500 font-medium leading-none">@{user?.username?.toLowerCase()}</p>
           
-          {/* Если в userDto есть bio и email, выводим их */}
-          <p className="mt-4 text-slate-700 leading-relaxed max-w-lg">
-            {user.bio || "Стек: React, MobX, TypeScript 🚀"}
+          <p className="mt-4 text-slate-700 leading-relaxed font-medium">
+            {user?.bio || "Стек: React, MobX, TypeScript 🚀"}
           </p>
           
-          <div className="flex gap-4 mt-4 text-sm text-gray-500">
-             <span><strong>{user.email}</strong></span>
-             <span>ID: {user.id}</span>
+          <div className="flex gap-4 mt-4 text-sm font-semibold">
+             <span className="text-slate-900">128 <span className="text-slate-400 font-medium">Читаемые</span></span>
+             <span className="text-slate-900">42 <span className="text-slate-400 font-medium">Читатели</span></span>
           </div>
         </div>
       </div>
 
-      {/* ТАБЫ И КОНТЕНТ (оставляем логику отрисовки) */}
-      {/* ... */}
+      {/* Табы */}
+      <div className="flex border-b border-slate-100">
+        {['Посты', 'Медиа', 'Нравится'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-4 text-sm font-bold transition-all ${
+              activeTab === tab ? 'text-blue-600 border-b-4 border-blue-600' : 'text-slate-400 hover:bg-slate-50'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      
+      {/* Заглушка постов */}
+      <div className="p-10 text-center text-slate-400 font-medium">
+        Тут пока пусто, как в космосе 🌌
+      </div>
     </div>
   );
 });

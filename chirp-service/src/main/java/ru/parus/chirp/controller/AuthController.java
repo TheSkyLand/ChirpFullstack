@@ -28,38 +28,23 @@ import ru.parus.chirp.service.impl.AuthService;
  * @version 30.01.2026
  */
 @RestController
-@RequestMapping(value = "/api/v1/auth", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/auth", produces = MediaType.APPLICATION_JSON_VALUE) // Оставляем только produces
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "Регистрация пользователя",
-            description = "")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE) // Переносим consumes сюда
     public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
-    @Operation(summary = "Авторизация пользователя",
-            description = "")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE) // И сюда
     public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @Operation(summary = "Получение информации о текущем пользователе",
-            description = "")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
-    @GetMapping("/me")
+    @GetMapping("/me") // Теперь GET-запрос не будет требовать JSON на вход
     public ResponseEntity<UserEntity> getCurrentUser() {
         return ResponseEntity.ok(authService.getCurrentUserEntity());
     }
