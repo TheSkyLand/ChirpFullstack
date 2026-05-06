@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { authStore } from "../store/AuthStore";
+import { Link } from "react-router-dom";
 
 const Profile = observer(() => {
   const [activeTab, setActiveTab] = useState('Посты');
@@ -33,9 +34,9 @@ const Profile = observer(() => {
         {/* Аватарка */}
         <div className="absolute -top-16 left-6">
           <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-2xl flex items-center justify-center">
-             <div className="w-full h-full rounded-2xl bg-blue-50 flex items-center justify-center text-4xl font-black text-blue-600">
-               {user?.username ? user.username[0].toUpperCase() : '?'}
-             </div>
+            <div className="w-full h-full rounded-2xl bg-blue-50 flex items-center justify-center text-4xl font-black text-blue-600">
+              {user?.username ? user.username[0].toUpperCase() : '?'}
+            </div>
           </div>
         </div>
 
@@ -50,14 +51,20 @@ const Profile = observer(() => {
         <div className="mt-8">
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter">{user?.username}</h1>
           <p className="text-slate-500 font-medium leading-none">@{user?.username?.toLowerCase()}</p>
-          
+
           <p className="mt-4 text-slate-700 leading-relaxed font-medium">
             {user?.bio || "Стек: React, MobX, TypeScript 🚀"}
           </p>
-          
+
           <div className="flex gap-4 mt-4 text-sm font-semibold">
-             <span className="text-slate-900">128 <span className="text-slate-400 font-medium">Читаемые</span></span>
-             <span className="text-slate-900">42 <span className="text-slate-400 font-medium">Читатели</span></span>
+            <Link to={`/profile/${user?.username}/following`} className="hover:underline decoration-slate-400">
+              <span className="text-slate-900">{user?.following || 0}</span>
+              <span className="text-slate-400 font-medium ml-1">Читаемые</span>
+            </Link>
+            <Link to={`/profile/${user?.username}/followers`} className="hover:underline decoration-slate-400">
+              <span className="text-slate-900">{user?.followers || 0}</span>
+              <span className="text-slate-400 font-medium ml-1">Читатели</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -68,15 +75,14 @@ const Profile = observer(() => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-4 text-sm font-bold transition-all ${
-              activeTab === tab ? 'text-blue-600 border-b-4 border-blue-600' : 'text-slate-400 hover:bg-slate-50'
-            }`}
+            className={`flex-1 py-4 text-sm font-bold transition-all ${activeTab === tab ? 'text-blue-600 border-b-4 border-blue-600' : 'text-slate-400 hover:bg-slate-50'
+              }`}
           >
             {tab}
           </button>
         ))}
       </div>
-      
+
       {/* Заглушка постов */}
       <div className="p-10 text-center text-slate-400 font-medium">
         Тут пока пусто, как в космосе 🌌

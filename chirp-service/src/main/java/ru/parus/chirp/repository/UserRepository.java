@@ -19,7 +19,7 @@ import ru.parus.chirp.model.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByUsername(String username);
     boolean existsByUsername(String username);
-    // Игнорим написание имени
-    Page<UserEntity> findByIdContainsIgnoreCase(Pageable pageable, String username);
 
+    // Правильный метод для поиска (частичное совпадение без учета регистра)
+    Page<UserEntity> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
 }

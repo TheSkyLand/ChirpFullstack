@@ -40,12 +40,15 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public Page<UserDto> index(Pageable pageable, String username) {
-        if (username == null) {
+        // Если поиск пустой — отдаем всех
+        if (username == null || username.trim().isEmpty()) {
             return userRepository.findAll(pageable).map(userMapper::toDto);
         }
-        return userRepository.findByIdContainsIgnoreCase(pageable, username)
+        // Вызываем исправленный метод поиска по username
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable)
                 .map(userMapper::toDto);
     }
+
 
     @Override
     @Transactional(readOnly = true)

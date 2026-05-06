@@ -46,6 +46,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
 
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> show(@PathVariable Long id) {
         return ResponseEntity.ok(userService.show(id));

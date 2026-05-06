@@ -10,65 +10,37 @@ const apiClient = axios.create({
     },
 });
 
-// Request interceptor
+// Request interceptor: добавляем токен
 apiClient.interceptors.request.use(
     (config) => {
-        // Здесь можно добавить токен авторизации
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor: обрабатываем ошибки без жестких редиректов
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response != null) {
-            const numberStatus: number = Math.round(error.response.status / 100);
+        // Логируем для дебага в консоль браузера
+        console.error("[API Error]", error.response?.status, error.config?.url, error.response?.data);
 
-            switch (numberStatus) {
-                case 4: // 4xx ошибки
-                    switch (error.response.status) {
-                        case 400:
-                            window.location.replace(`/error?code=${error.response.status}`);
-                            break;
-                        case 401:
-                        case 403:
-                            window.location.replace("/login/1");
-                            break;
-                        case 404:
-                        case 405:
-                            window.location.replace(`/error?code=${error.response.status}`);
-                            break;
-                        default:
-                            window.location.replace(`/error?code=${error.response.status}`);
-                    }
-                    break;
-
-                case 5: // 5xx ошибки
-                    if (error.response.status >= 500 && error.response.status <= 505) {
-                        window.location.replace(`/error?code=${error.response.status}`);
-                    }
-                    break;
-
-                default:
-                    window.location.replace("/error");
-                    break;
+        if (error.response) {
+            // Если токен протух (401), можно просто очистить стор или увести на логин
+            if (error.response.status === 401 || error.response.status === 403) {
+                console.warn("Сессия истекла или нет доступа");
+                // localStorage.removeItem('token'); // Раскомментируй, если хочешь сброс
             }
+        } else {
+            // Ошибка сети (сервер выключен)
+            console.error("Сервер недоступен или ошибка сети");
         }
 
-        if (error.response == null) {
-            // Сетевая ошибка (сервер недоступен)
-            window.location.replace("/error");
-            return Promise.reject(error);
-        }
-
+        // ВАЖНО: Просто пробрасываем ошибку дальше, чтобы сработал try/catch в UserStore
         return Promise.reject(error);
     }
 );
