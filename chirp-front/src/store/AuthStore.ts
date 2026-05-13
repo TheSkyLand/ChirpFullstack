@@ -12,23 +12,27 @@ class AuthStore {
     }
 
     // Метод для загрузки данных профиля
+    // Внутри AuthStore
     async fetchProfile() {
-        if (!localStorage.getItem('token')) return;
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
-        this.isLoading = true;
+        runInAction(() => { this.isLoading = true; }); // Сразу ставим флаг
+
         try {
             const response = await AuthController.getCurrentUser();
-            // В MobX после await изменения должны быть внутри runInAction
             runInAction(() => {
                 this.user = response.data;
                 this.isAuthenticated = true;
             });
         } catch (error) {
+            console.error("Profile load failed", error);
             this.logout();
         } finally {
-            runInAction(() => this.isLoading = false);
+            runInAction(() => { this.isLoading = false; });
         }
     }
+
 
     login(token: string) {
         localStorage.setItem('token', token);

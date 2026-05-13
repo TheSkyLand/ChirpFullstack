@@ -19,7 +19,7 @@ spring:
       default-schema: public
   jpa:
     hibernate:
-      ddl-auto: ${DDL_AUTO:validate}
+      ddl-auto: ${DDL_AUTO:update}
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
   freemarker:

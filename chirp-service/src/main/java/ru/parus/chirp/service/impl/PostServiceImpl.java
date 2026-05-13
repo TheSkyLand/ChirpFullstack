@@ -92,4 +92,55 @@ public class PostServiceImpl implements PostService {
         }
         throw new PermissionDeniedException();
     }
+    // Метод для создания поста с картинкой
+    @Override
+    @Transactional
+    public PostDto createWithFile(String content, org.springframework.web.multipart.MultipartFile file) {
+        UserEntity user = userService.getCurrentUserEntity();
+
+        PostEntity postEntity = new PostEntity();
+        postEntity.setContent(content);
+        postEntity.setOwner(user);
+
+        if (file != null && !file.isEmpty()) {
+            // Здесь должна быть логика сохранения файла.
+            // Для заглушки просто запишем имя файла, если в Entity есть поле imageUrl
+            postEntity.setImageUrl(file.getOriginalFilename());
+        }
+
+        var result = postMapper.toDto(postRepository.save(postEntity));
+        notificationService.notifyAsyncNewPost(user.getId());
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public PostDto toggleLike(Long id) {
+        PostEntity post = postRepository.findById(id).orElseThrow(NotExistException::new);
+        UserEntity user = userService.getCurrentUserEntity();
+
+        // Простейшая логика лайков (если в PostEntity есть Set<UserEntity> likes)
+        if (post.getLikes().contains(user)) {
+            post.getLikes().remove(user);
+        } else {
+            post.getLikes().add(user);
+        }
+
+        return postMapper.toDto(postRepository.save(post));
+    }
+
+    @Override
+    @Transactional
+    public PostDto retweet(Long id) {
+        PostEntity original = postRepository.findById(id).orElseThrow(NotExistException::new);
+        UserEntity user = userService.getCurrentUserEntity();
+
+        PostEntity retweet = new PostEntity();
+        retweet.setOwner(user);
+        retweet.setParentPost(original); // У тебя должно быть поле parentPost в PostEntity
+        retweet.setContent(""); // Репост обычно пустой или с комментарием
+
+        return postMapper.toDto(postRepository.save(retweet));
+    }
+
 }

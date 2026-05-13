@@ -1,14 +1,6 @@
 package ru.parus.chirp.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,7 +17,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "posts")
-public class PostEntity  extends BaseEntity {
+public class PostEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,4 +28,25 @@ public class PostEntity  extends BaseEntity {
 
     @Column(name = "content", nullable = false)
     private String content;
+
+    // --- ДОБАВЬ ЭТО: ---
+
+    @Column(name = "image_url")
+    private String imageUrl; // Путь к картинке
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private PostEntity parentPost; // Для репостов
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "post_likes",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private java.util.Set<UserEntity> likes = new java.util.HashSet<>();
+
+    @OneToMany(mappedBy = "post", cascade = jakarta.persistence.CascadeType.ALL)
+    private java.util.List<CommentEntity> comments = new java.util.ArrayList<>();
 }
+

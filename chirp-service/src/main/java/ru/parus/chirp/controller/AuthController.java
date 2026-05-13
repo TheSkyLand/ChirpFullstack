@@ -39,10 +39,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(request));
     }
 
-    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE) // И сюда
+    @PostMapping("/login") // Убери consumes, Spring сам поймет по @RequestBody
     public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
 
     @GetMapping("/me") // Теперь GET-запрос не будет требовать JSON на вход
     public ResponseEntity<UserEntity> getCurrentUser() {

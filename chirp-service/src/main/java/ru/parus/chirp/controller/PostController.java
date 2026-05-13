@@ -10,14 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ru.parus.chirp.model.dto.post.PostDto;
 import ru.parus.chirp.service.PostService;
 
@@ -32,7 +26,7 @@ import ru.parus.chirp.service.PostService;
  */
 @Slf4j
 @RestController
-@RequestMapping(value = "/posts", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/posts", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PostController {
 
@@ -40,13 +34,18 @@ public class PostController {
 
 
     @PostMapping("/")
-    @Operation(summary = "Создание поста",
-            description = "Создает пост только для авторизованного пользователя")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
-    public ResponseEntity<PostDto> create(@RequestBody PostDto dto) {
+    public ResponseEntity<PostDto> create(@RequestBody PostDto dto) { // @RequestBody ОБЯЗАТЕЛЕН
         return ResponseEntity.ok(postService.create(dto));
+    }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<PostDto> toggleLike(@PathVariable Long id) {
+        return ResponseEntity.ok(postService.toggleLike(id));
+    }
+
+    @PostMapping("/{id}/retweet")
+    public ResponseEntity<PostDto> retweet(@PathVariable Long id) {
+        return ResponseEntity.ok(postService.retweet(id));
     }
 
     @GetMapping("/")

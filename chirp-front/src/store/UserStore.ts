@@ -10,6 +10,22 @@ class UserStore {
         makeAutoObservable(this);
     }
 
+    async fetchInitialUsers() {
+        this.isLoading = true;
+        try {
+            const response = await apiClient.get("/users"); // Или твой эндпоинт для списка
+            runInAction(() => {
+                // Если бэкенд возвращает Page, берем .content, если массив — берем .data
+                this.users = response.data.content || response.data || [];
+            });
+        } catch (error) {
+            console.error("Ошибка загрузки списка юзеров:", error);
+        } finally {
+            runInAction(() => { this.isLoading = false; });
+        }
+    }
+
+
     async searchUsers(query: string) {
         if (!query.trim()) {
             runInAction(() => { this.users = []; });

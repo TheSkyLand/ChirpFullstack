@@ -2,12 +2,15 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { authStore } from "../store/AuthStore";
 import { Link } from "react-router-dom";
+import { postStore } from "../store/PostStore";
+import Post from "../components/Post";
 
 const Profile = observer(() => {
   const [activeTab, setActiveTab] = useState('Посты');
   const user = authStore.user;
 
-  if (authStore.isLoading) {
+  // Если загрузка идет ИЛИ токен есть, но юзера еще не подгрузили — показываем лоадер
+  if (authStore.isLoading || (localStorage.getItem('token') && !user)) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-4">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -16,14 +19,11 @@ const Profile = observer(() => {
     );
   }
 
+  // Теперь это сработает только если реально нет ни юзера, ни токена
   if (!user && !authStore.isLoading) {
-    return (
-      <div className="p-20 text-center">
-        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Войдите в аккаунт</h2>
-        <p className="text-slate-500 mt-2">Чтобы увидеть профиль, нужно авторизоваться.</p>
-      </div>
-    );
+    return <div className="p-20 text-center text-2xl font-black">Войдите в аккаунт</div>;
   }
+
 
   return (
     <div className="bg-white">
@@ -83,10 +83,37 @@ const Profile = observer(() => {
         ))}
       </div>
 
-      {/* Заглушка постов */}
-      <div className="p-10 text-center text-slate-400 font-medium">
-        Тут пока пусто, как в космосе 🌌
-      </div>
+<div className="divide-y divide-gray-50">
+  {postStore.posts
+    .filter(p => {
+      // 1. Всегда фильтруем по автору (только посты этого профиля)
+      const isMyPost = p.author.username === user?.username;
+      
+      if (activeTab === 'Посты') return isMyPost;
+      if (activeTab === 'Медиа') return isMyPost && p.imageUrl; // Только с картинками
+      if (activeTab === 'Нравится') return p.isLiked; // Все, что лайкнул (даже чужие)
+      
+      return isMyPost;
+    })
+    .map(post => (
+      <Post key={post.id} post={post} />
+    ))
+  }
+
+  {/* Проверка на пустоту для конкретной вкладки */}
+  {postStore.posts.filter(p => {
+      const isMyPost = p.author.username === user?.username;
+      if (activeTab === 'Посты') return isMyPost;
+      if (activeTab === 'Медиа') return isMyPost && p.imageUrl;
+      if (activeTab === 'Нравится') return p.isLiked;
+      return isMyPost;
+  }).length === 0 && (
+    <div className="p-10 text-center text-slate-400 font-medium">
+      На вкладке "{activeTab}" пока ничего нет 🌌
+    </div>
+  )}
+</div>
+
     </div>
   );
 });
