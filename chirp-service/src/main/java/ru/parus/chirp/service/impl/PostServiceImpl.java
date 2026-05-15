@@ -44,19 +44,51 @@ public class PostServiceImpl implements PostService {
         PostEntity postEntity = postMapper.toEntity(dto);
         postEntity.setOwner(user);
         var result = postMapper.toDto(postRepository.save(postEntity));
-        notificationService.notifyAsyncNewPost(user.getId()); // Не ждем завершения!
+        notificationService.notifyAsyncNewPost(user.getId());
         return result;
     }
 
     @Override
+    @Transactional
+    public PostDto addComment(Long id, PostDto commentDto) {
+        log.info("Добавление комментария к посту с ID: {}", id);
+
+        // 1. Находим оригинальный пост, под которым пишется комментарий
+        PostEntity originalPost = postRepository.findById(id)
+                .orElseThrow(NotExistException::new);
+
+        // 2. Получаем текущего авторизованного пользователя
+        UserEntity currentUser = userService.getCurrentUserEntity();
+
+        // 3. Создаем новую сущность поста, которая будет выступать в роли комментария
+        PostEntity commentEntity = new PostEntity();
+        commentEntity.setOwner(currentUser);
+        commentEntity.setContent(commentDto.getContent()); // Берем текст из пришедшего JSON
+        commentEntity.setParentPost(originalPost);         // Привязываем к родительскому посту
+
+        // 4. Сохраняем в базу данных
+        PostEntity savedComment = postRepository.save(commentEntity);
+
+        // 5. Асинхронно отправляем уведомление автору оригинального поста (опционально, если нужно)
+        // notificationService.notifyAsyncNewComment(originalPost.getOwner().getId(), currentUser.getUsername());
+
+        // 6. Маппим в DTO и возвращаем на фронтенд
+        return postMapper.toDto(savedComment);
+    }
+
+
+    @Override
     @Transactional(readOnly = true)
     public Page<PostDto> index(final Pageable pageable) {
-        Page<PostEntity> pageEntities;
-        pageEntities = postRepository.findAll(pageable);
-        return new PageImpl<>(pageEntities.getContent().stream().map(postMapper::toDto).toList(),
-                        pageable,
-                        pageEntities.getContent().size()
-                );
+        // Подразумевается, что метод репозитория возвращает посты, отсортированные по дате создания
+        Page<PostEntity> pageEntities = postRepository.findAll(pageable);
+
+        // ИСПРАВЛЕНО: Передаем реальное общее количество записей из БД (pageEntities.getTotalElements())
+        return new PageImpl<>(
+                pageEntities.getContent().stream().map(postMapper::toDto).toList(),
+                pageable,
+                pageEntities.getTotalElements()
+        );
     }
 
     @Override
@@ -92,7 +124,7 @@ public class PostServiceImpl implements PostService {
         }
         throw new PermissionDeniedException();
     }
-    // Метод для создания поста с картинкой
+
     @Override
     @Transactional
     public PostDto createWithFile(String content, org.springframework.web.multipart.MultipartFile file) {
@@ -103,8 +135,6 @@ public class PostServiceImpl implements PostService {
         postEntity.setOwner(user);
 
         if (file != null && !file.isEmpty()) {
-            // Здесь должна быть логика сохранения файла.
-            // Для заглушки просто запишем имя файла, если в Entity есть поле imageUrl
             postEntity.setImageUrl(file.getOriginalFilename());
         }
 
@@ -119,7 +149,6 @@ public class PostServiceImpl implements PostService {
         PostEntity post = postRepository.findById(id).orElseThrow(NotExistException::new);
         UserEntity user = userService.getCurrentUserEntity();
 
-        // Простейшая логика лайков (если в PostEntity есть Set<UserEntity> likes)
         if (post.getLikes().contains(user)) {
             post.getLikes().remove(user);
         } else {
@@ -135,12 +164,48 @@ public class PostServiceImpl implements PostService {
         PostEntity original = postRepository.findById(id).orElseThrow(NotExistException::new);
         UserEntity user = userService.getCurrentUserEntity();
 
+        // Если пользователь пытается репостнуть уже существующий репост,
+        // мы автоматически привязываем новый репост к первоисточнику (оригинальному автору контента)
+        if (original.getParentPost() != null) {
+            original = original.getParentPost();
+        }
+
+        // ИСПРАВЛЕНО: Предотвращаем дублирование репостов от одного и того же человека
+        boolean alreadyRetweeted = postRepository.existsByParentPostAndOwner(original, user);
+        if (alreadyRetweeted) {
+            log.warn("Пользователь {} уже делал репост публикации {}", user.getUsername(), original.getId());
+            return postMapper.toDto(original);
+        }
+
         PostEntity retweet = new PostEntity();
         retweet.setOwner(user);
-        retweet.setParentPost(original); // У тебя должно быть поле parentPost в PostEntity
-        retweet.setContent(""); // Репост обычно пустой или с комментарием
+        retweet.setParentPost(original);
+        retweet.setContent(""); // Для простого репоста текст пустой
 
-        return postMapper.toDto(postRepository.save(retweet));
+        PostEntity savedRetweet = postRepository.save(retweet);
+
+        // Отправляем системное асинхронное уведомление автору оригинального контента
+        notificationService.notifyAsyncRepost(original.getOwner().getId(), user.getUsername());
+
+        return postMapper.toDto(savedRetweet);
     }
 
+    // РЕАЛИЗОВАНО: Метод отмены репоста для обработки DELETE-запроса с фронтенда
+    @Override
+    @Transactional
+    public void unretweet(Long id) {
+        PostEntity original = postRepository.findById(id).orElseThrow(NotExistException::new);
+        UserEntity user = userService.getCurrentUserEntity();
+
+        if (original.getParentPost() != null) {
+            original = original.getParentPost();
+        }
+
+        // Ищем конкретный репост текущего пользователя к этому оригинальному посту
+        PostEntity retweetToDelete = postRepository.findByParentPostAndOwner(original, user)
+                .orElseThrow(NotExistException::new);
+
+        postRepository.delete(retweetToDelete);
+        log.info("Репост пользователя {} к публикации {} успешно отменен", user.getUsername(), original.getId());
+    }
 }

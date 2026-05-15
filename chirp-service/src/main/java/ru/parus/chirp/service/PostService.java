@@ -21,6 +21,12 @@ public interface PostService {
     PostDto update(Long id, final PostDto dto);
     PostDto createWithFile(String content, MultipartFile file);
     PostDto toggleLike(Long id);
+
+    PostDto addComment(Long id, PostDto commentDto);
+
     PostDto retweet(Long id);
+
+    void unretweet(Long id);
+
     void delete(Long id);
 }

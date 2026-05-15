@@ -5,6 +5,7 @@ import ru.parus.chirp.model.PostEntity;
 import ru.parus.chirp.model.UserEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * PostRepository
@@ -17,6 +18,8 @@ import java.util.List;
  * @version 30.01.2026
  */
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
+    boolean existsByParentPostAndOwner(PostEntity parentPost, UserEntity owner);
+    Optional<PostEntity> findByParentPostAndOwner(PostEntity parentPost, UserEntity owner);
 
     List<PostEntity> findAllByOwner(UserEntity userEntity);
     long countByOwner(UserEntity userEntity);

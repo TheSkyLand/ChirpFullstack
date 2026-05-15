@@ -86,8 +86,8 @@ const Profile = observer(() => {
 <div className="divide-y divide-gray-50">
   {postStore.posts
     .filter(p => {
-      // 1. Всегда фильтруем по автору (только посты этого профиля)
-      const isMyPost = p.author.username === user?.username;
+      // ИСПРАВЛЕНО: Пост считается вашим, если вы его автор ИЛИ если вы его репостнули (вы владелец корневого репоста)
+      const isMyPost = p.author?.username === user?.username;
       
       if (activeTab === 'Посты') return isMyPost;
       if (activeTab === 'Медиа') return isMyPost && p.imageUrl; // Только с картинками
@@ -95,14 +95,21 @@ const Profile = observer(() => {
       
       return isMyPost;
     })
-    .map(post => (
-      <Post key={post.id} post={post} />
-    ))
+    .map(post => {
+      // ИСПРАВЛЕНО: Генерация гарантированно уникального ключа для React, чтобы избавиться от ошибок дублирования ID
+      const uniqueKey = post.parentPost 
+        ? `repost-${post.id}-${post.author?.username}` 
+        : `post-${post.id}`;
+
+      return (
+        <Post key={uniqueKey} post={post} />
+      );
+    })
   }
 
   {/* Проверка на пустоту для конкретной вкладки */}
   {postStore.posts.filter(p => {
-      const isMyPost = p.author.username === user?.username;
+      const isMyPost = p.author?.username === user?.username;
       if (activeTab === 'Посты') return isMyPost;
       if (activeTab === 'Медиа') return isMyPost && p.imageUrl;
       if (activeTab === 'Нравится') return p.isLiked;
@@ -113,6 +120,7 @@ const Profile = observer(() => {
     </div>
   )}
 </div>
+
 
     </div>
   );

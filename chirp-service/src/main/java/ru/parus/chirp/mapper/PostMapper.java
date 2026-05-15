@@ -20,7 +20,7 @@ import ru.parus.chirp.model.dto.post.PostDto;
 @Mapper(componentModel = "spring")
 public interface PostMapper {
 
-    @Mapping(target = "userId", source = "owner.id")
+    @Mapping(target = "parentPost.parentPost", ignore = true) // Пресекаем бесконечную вложенность
     PostDto toDto(PostEntity entity);
 
     PostEntity toEntity(PostDto dto);

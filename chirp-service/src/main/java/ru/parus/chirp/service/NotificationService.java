@@ -3,12 +3,14 @@ package ru.parus.chirp.service;
 /**
  * NotificationService
  * <p>
+ *      Интерфейс для работы с уведомлениями
  * </p>
- *
- * @author Grachev.D.G  (zhulvern-92@mail.ru)
- * @version 27.02.2026
  */
 public interface NotificationService {
-    // Уведомить подписчиков о новом посте
+
+    // Ваш существующий метод
     void notifyAsyncNewPost(Long userId);
+
+    // ДОБАВИТЬ: Метод для асинхронного уведомления о репосте
+    void notifyAsyncRepost(Long targetUserId, String reposterUsername);
 }

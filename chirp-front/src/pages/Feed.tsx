@@ -25,18 +25,18 @@ const Feed = observer(() => {
         setPreviewUrl(null);
     };
 
-// В компоненте, где форма создания поста
-const handlePostSubmit = () => {
-    if (!text.trim() && !selectedImage) return;
+    // В компоненте, где форма создания поста
+    const handlePostSubmit = () => {
+        if (!text.trim() && !selectedImage) return;
 
-    // Вызываем метод стора, который мы написали
-    postStore.createPost(text, selectedImage); 
-    
-    // Очищаем локальное состояние формы
-    setText("");
-    setSelectedImage(null);
-    setPreviewUrl(null);
-};
+        // Вызываем метод стора, который мы написали
+        postStore.createPost(text, selectedImage);
+
+        // Очищаем локальное состояние формы
+        setText("");
+        setSelectedImage(null);
+        setPreviewUrl(null);
+    };
 
 
     return (
@@ -82,9 +82,29 @@ const handlePostSubmit = () => {
 
             {/* Список постов (ТЕПЕРЬ ВНУТРИ RETURN) */}
             <div className="flex flex-col divide-y divide-gray-50">
-                {postStore.posts.map(postItem => (
-                    <Post key={postItem.id} post={postItem} />
-                ))}
+                {/* Было: key={postItem.id} */}
+                {/* Стало: если у поста есть родитель, мы создаем уникальную строку ключа */}
+                {/* Список постов (ТЕПЕРЬ С ГАРАНТИРОВАННО УНИКАЛЬНЫМИ КЛЮЧАМИ) */}
+{/* Список постов (Гарантированная уникальность через индекс) */}
+{/* Список постов с предварительной фильтрацией от битых данных бэкенда */}
+<div className="flex flex-col divide-y divide-gray-50">
+    {postStore.posts
+        .filter(postItem => postItem && postItem.author) // ИСПРАВЛЕНО: Пропускаем только посты, у которых точно есть автор!
+        .map((postItem, index) => {
+            const uniqueKey = postItem.parentPost 
+                ? `repost-${postItem.id}-${postItem.author?.username || 'user'}-${index}` 
+                : `post-${postItem.id}-${index}`;
+
+            return (
+                <Post key={uniqueKey} post={postItem} />
+            );
+        })
+    }
+</div>
+
+
+
+
             </div>
         </>
     );

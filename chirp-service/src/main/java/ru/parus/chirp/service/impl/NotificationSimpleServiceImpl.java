@@ -46,4 +46,25 @@ public class NotificationSimpleServiceImpl implements NotificationService {
 
         log.debug("Завершена асинхронная отправка уведомлений для userId: {}", userId);
     }
+
+    // РЕАЛИЗАЦИЯ: Логирование факта репоста в асинхронном потоке
+    @Override
+    @Async("asyncExecutor")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void notifyAsyncRepost(Long targetUserId, String reposterUsername) {
+        try {
+            // Находим автора оригинального поста, которого репостнули
+            UserEntity targetUser = userRepository.findById(targetUserId)
+                    .orElseThrow(NotExistUserException::new);
+
+            // Выводим системный лог о том, что уведомление доставлено адресату
+            log.info("Уведомление для {}: Пользователь @{} репостнул вашу запись! 🔄",
+                    targetUser.getUsername(), reposterUsername);
+
+        } catch (Exception e) {
+            log.error("Ошибка при обработке уведомления о репосте для targetUserId: {}", targetUserId, e);
+        }
+
+        log.debug("Завершена асинхронная отправка уведомления о репосте для targetUserId: {}", targetUserId);
+    }
 }

@@ -32,9 +32,20 @@ public class PostController {
 
     private final PostService postService;
 
+    // Исправлено: поддержка отправки картинок и текста (FormData) вместо строгого @RequestBody JSON
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Создание поста с картинкой или без")
+    public ResponseEntity<PostDto> create(
+            @RequestPart("content") String content,
+            @RequestPart(value = "image", required = false) MultipartFile file) {
 
-    @PostMapping("/")
-    public ResponseEntity<PostDto> create(@RequestBody PostDto dto) { // @RequestBody ОБЯЗАТЕЛЕН
+        log.info("Создание нового чирпа. Текст: {}, Файл прикреплен: {}", content, file != null);
+        return ResponseEntity.ok(postService.createWithFile(content, file));
+    }
+
+    // Дополнительный метод для обратной совместимости, если фронт шлет чистый JSON без картинок
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PostDto> createJson(@RequestBody PostDto dto) {
         return ResponseEntity.ok(postService.create(dto));
     }
 
@@ -43,14 +54,37 @@ public class PostController {
         return ResponseEntity.ok(postService.toggleLike(id));
     }
 
+    // Создание простого репоста
     @PostMapping("/{id}/retweet")
+    @Operation(summary = "Сделать репост записи")
     public ResponseEntity<PostDto> retweet(@PathVariable Long id) {
         return ResponseEntity.ok(postService.retweet(id));
     }
 
-    @GetMapping("/")
-    @Operation(summary = "Просмотр постов пользователя",
-            description = "")
+    // ИСПРАВЛЕНО: Добавлен эндпоинт отмены репоста (Unretweet) для оптимистичного UI фронтенда
+    @DeleteMapping("/{id}/retweet")
+    @Operation(summary = "Отменить репост записи")
+    public ResponseEntity<Void> unretweet(@PathVariable Long id) {
+        postService.unretweet(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ИСПРАВЛЕНО: Добавлен недостающий эндпоинт для комментариев
+    @PostMapping("/{id}/comments")
+    @Operation(summary = "Добавить комментарий к посту")
+    public ResponseEntity<PostDto> addComment(
+            @PathVariable Long id,
+            @RequestBody PostDto commentDto) {
+
+        log.info("Запрос на добавление комментария к посту ID: {}", id);
+        return ResponseEntity.ok(postService.addComment(id, commentDto));
+    }
+
+
+
+    // Убран Trailing Slash для избежания 404 ошибок в Axios
+    @GetMapping
+    @Operation(summary = "Просмотр постов пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
@@ -59,8 +93,7 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Просмотр поста пользователя",
-            description = "")
+    @Operation(summary = "Просмотр поста пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
@@ -68,26 +101,16 @@ public class PostController {
         return ResponseEntity.ok(postService.show(id));
     }
 
-
     @PatchMapping("/{id}")
-    @Operation(summary = "Обновление поста пользователя",
-            description = "Требуется авторизация")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
+    @Operation(summary = "Обновление поста пользователя", description = "Требуется авторизация")
     public ResponseEntity<PostDto> update(@PathVariable Long id, @RequestBody PostDto dto) {
         return ResponseEntity.ok(postService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удаление поста пользователя",
-            description = "Требуется авторизация")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешный ответ"),
-    })
+    @Operation(summary = "Удаление поста пользователя", description = "Требуется авторизация")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         postService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
 }

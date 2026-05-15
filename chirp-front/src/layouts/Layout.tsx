@@ -4,16 +4,22 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, User, Home, Hash, Bookmark, MessageSquare, LogOut } from "lucide-react";
 import { authStore } from "../store/AuthStore";
 import SearchBar from "../components/SearchBar";
+import { postStore } from "../store/PostStore";
 
 const Layout = observer(() => {
     const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Загрузка профиля пользователя
         if (authStore.isAuthenticated && !authStore.user) {
             authStore.fetchProfile();
         }
+        
+        // ДОБАВИТЬ: Автоматическая загрузка ленты из БД Spring Boot при инициализации сайта
+        postStore.fetchPosts();
     }, []);
+
 
     const handleLogout = () => {
         authStore.logout();

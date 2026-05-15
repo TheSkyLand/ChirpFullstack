@@ -35,8 +35,9 @@ public class PostEntity extends BaseEntity {
     private String imageUrl; // Путь к картинке
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private PostEntity parentPost; // Для репостов
+    @JoinColumn(name = "parent_post_id")
+    private PostEntity parentPost;
+
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
