@@ -13,11 +13,12 @@ class AuthStore {
 
     // Метод для загрузки данных профиля
     // Внутри AuthStore
-    async fetchProfile() {
+    // Внутри AuthStore
+    async fetchProfile(): Promise<boolean> {
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) return false;
 
-        runInAction(() => { this.isLoading = true; }); // Сразу ставим флаг
+        runInAction(() => { this.isLoading = true; });
 
         try {
             const response = await AuthController.getCurrentUser();
@@ -25,13 +26,16 @@ class AuthStore {
                 this.user = response.data;
                 this.isAuthenticated = true;
             });
+            return true; // Успешно загрузили
         } catch (error) {
             console.error("Profile load failed", error);
             this.logout();
+            return false;
         } finally {
             runInAction(() => { this.isLoading = false; });
         }
     }
+
 
 
     login(token: string) {

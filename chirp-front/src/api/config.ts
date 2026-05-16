@@ -13,15 +13,20 @@ const apiClient = axios.create({
 // Request interceptor: добавляем токен
 apiClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        // Каждый раз при отправке запроса принудительно лезем в localStorage за токеном
+        const token = localStorage.getItem("token");
+        
         if (token) {
+            // Если токен найден, внедряем его в заголовки авторизации Spring Security
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        return Promise.reject(error);
+    }
 );
-
 // Response interceptor: обрабатываем ошибки без жестких редиректов
 apiClient.interceptors.response.use(
     (response) => response,

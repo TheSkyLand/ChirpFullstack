@@ -18,6 +18,8 @@ import ru.parus.chirp.service.NotificationService;
 import ru.parus.chirp.service.PostService;
 import ru.parus.chirp.service.UserService;
 
+import java.util.List;
+
 /**
  * PostServiceImpl
  * <p>
@@ -78,18 +80,27 @@ public class PostServiceImpl implements PostService {
 
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<PostDto> index(final Pageable pageable) {
-        // Подразумевается, что метод репозитория возвращает посты, отсортированные по дате создания
+    public Page<PostDto> index(Pageable pageable, String username, int userId) {
         Page<PostEntity> pageEntities = postRepository.findAll(pageable);
+        UserEntity currentUser = userService.getCurrentUserEntity(); // получаем юзера для лайков
 
-        // ИСПРАВЛЕНО: Передаем реальное общее количество записей из БД (pageEntities.getTotalElements())
-        return new PageImpl<>(
-                pageEntities.getContent().stream().map(postMapper::toDto).toList(),
-                pageable,
-                pageEntities.getTotalElements()
-        );
+        List<PostDto> dtoList = pageEntities.getContent().stream().map(postEntity -> {
+            // Теперь маппер САМ идеально соберет объект author и userId!
+            PostDto dto = postMapper.toDto(postEntity);
+
+            // Оставляем только динамический расчет флагов для текущей сессии
+            if (currentUser != null) {
+                dto.setIsLiked(postEntity.getLikes() != null && postEntity.getLikes().contains(currentUser));
+                dto.setIsRetweeted(postRepository.existsByParentPostAndOwner(postEntity, currentUser));
+            }
+
+            dto.setLikesCount(postEntity.getLikes() != null ? postEntity.getLikes().size() : 0);
+            return dto;
+        }).toList();
+
+        return new PageImpl<>(dtoList, pageable, pageEntities.getTotalElements());
     }
+
 
     @Override
     @Transactional(readOnly = true)

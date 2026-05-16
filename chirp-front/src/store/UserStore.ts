@@ -3,8 +3,8 @@ import apiClient from "../api/config";
 import type { userDto } from "../types/user.types";
 
 class UserStore {
-    users: userDto[] = [];          // Для страницы рекомендаций (Explore)
-    searchResults: userDto[] = [];  // Исправлено: отдельный стейт для поиска (SearchBar)
+    users: userDto[] = [];          
+    searchResults: userDto[] = [];  
     isLoading = false;
 
     constructor() {
@@ -33,12 +33,14 @@ class UserStore {
 
         this.isLoading = true;
         try {
+            // ИСПРАВЛЕНО: Убран лишний слэш после users, чтобы Spring Boot не выдавал 404
             const response = await apiClient.get("/api/v1/users", { params: { username: query } });
             runInAction(() => {
                 this.searchResults = response.data.content || response.data || [];
             });
         } catch (error) {
             console.error("Ошибка при поиске юзеров:", error);
+            runInAction(() => { this.searchResults = []; }); // Очищаем в случае ошибки
         } finally {
             runInAction(() => { this.isLoading = false; });
         }

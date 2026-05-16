@@ -25,7 +25,7 @@ export interface IPost {
     repliesCount: number;
     isLiked: boolean;
     isRetweeted: boolean;
-    parentPost?: IPost; // Ссылка на оригинальный пост
+    parentPost?: IPost; 
     comments?: IComment[];
 }
 
@@ -41,37 +41,63 @@ class PostStore {
     async fetchPosts() {
         this.isLoading = true;
         try {
-            // Заменяем <any> на <unknown> — это чистый тип для динамических ответов API
             const response = await apiClient.get<unknown>('/api/v1/posts');
 
             runInAction(() => {
-                // Приводим ответ к объекту Spring Page или массиву через безопасный кастинг
                 const dataObj = response.data as Record<string, unknown>;
 
-                // Извлекаем массив content, если он есть, либо весь ответ как массив объектов
                 const rawPosts = (Array.isArray(dataObj.content)
                     ? dataObj.content
                     : (Array.isArray(response.data) ? response.data : [])) as Record<string, unknown>[];
 
-                this.posts = rawPosts.map((p) => ({
-                    ...p,
-                    id: Number(p.id),
-                    content: String(p.content || ""),
-                    imageUrl: p.imageUrl ? String(p.imageUrl) : undefined,
-                    createdAt: String(p.createdAt || ""),
-                    author: p.author as { username: string; name: string },
-                    parentPost: p.parentPost as IPost | undefined,
-                    comments: p.comments as IComment[] | undefined,
+                this.posts = rawPosts.map((p) => {
+                    // ИСПРАВЛЕНИЕ АНОНИМОВ: Защита на фронтенде от null в поле author с бэкенда
+                    let finalAuthor = { username: "user", name: "Пользователь" };
+                    
+                    if (p.author && typeof p.author === 'object') {
+                        finalAuthor = p.author as { username: string; name: string };
+                    } else if (authStore.user) {
+                        // Если автор пустой, но мы авторизованы, подставляем текущего юзера, чтобы не было анонимов
+                        finalAuthor = { username: authStore.user.username, name: authStore.user.username };
+                    }
 
-                    // Защита числовых счетчиков от NaN и null
-                    likesCount: Number(p.likesCount) || Number(p.likeCount) || 0,
-                    retweetsCount: Number(p.retweetsCount) || Number(p.retweetCount) || 0,
-                    repliesCount: Number(p.repliesCount) || Number(p.replyCount) || 0,
+                    // Такая же проверка для вложенного репоста
+                    let finalParentPost: IPost | undefined = undefined;
+                    if (p.parentPost && typeof p.parentPost === 'object') {
+                        const rawParent = p.parentPost as Record<string, unknown>;
+                        finalParentPost = {
+                            ...rawParent,
+                            id: Number(rawParent.id),
+                            content: String(rawParent.content || ""),
+                            imageUrl: rawParent.imageUrl ? String(rawParent.imageUrl) : undefined,
+                            createdAt: String(rawParent.createdAt || ""),
+                            author: (rawParent.author as { username: string; name: string }) || { username: "user", name: "Пользователь" },
+                            likesCount: Number(rawParent.likesCount) || 0,
+                            retweetsCount: Number(rawParent.retweetsCount) || 0,
+                            repliesCount: Number(rawParent.repliesCount) || 0,
+                            isLiked: Boolean(rawParent.isLiked),
+                            isRetweeted: Boolean(rawParent.isRetweeted)
+                        } as IPost;
+                    }
 
-                    // Защита логических флагов
-                    isLiked: Boolean(p.isLiked),
-                    isRetweeted: Boolean(p.isRetweeted)
-                })) as unknown as IPost[];
+                    return {
+                        ...p,
+                        id: Number(p.id),
+                        content: String(p.content || ""),
+                        imageUrl: p.imageUrl ? String(p.imageUrl) : undefined,
+                        createdAt: String(p.createdAt || ""),
+                        author: finalAuthor,
+                        parentPost: finalParentPost,
+                        comments: p.comments as IComment[] | undefined,
+
+                        likesCount: Number(p.likesCount) || Number(p.likeCount) || 0,
+                        retweetsCount: Number(p.retweetsCount) || Number(p.retweetCount) || 0,
+                        repliesCount: Number(p.repliesCount) || Number(p.replyCount) || 0,
+
+                        isLiked: Boolean(p.isLiked),
+                        isRetweeted: Boolean(p.isRetweeted)
+                    };
+                }) as unknown as IPost[];
             });
         } catch (e) {
             console.error("Ошибка загрузки постов", e);
@@ -80,10 +106,6 @@ class PostStore {
         }
     }
 
-
-
-
-    // Исправлено: корректная отправка файлов на бэкенд через FormData
     async createPost(text: string, file: File | null) {
         try {
             let response;
@@ -114,8 +136,6 @@ class PostStore {
         }
     }
 
-    // Лайк (Оптимистичный UI)
-    // Лайк (Строгая реактивная мутация через MobX)
     async toggleLike(postId: number) {
         const postIndex = this.posts.findIndex(p => p.id === postId);
         if (postIndex === -1) return;
@@ -123,7 +143,6 @@ class PostStore {
         const post = this.posts[postIndex];
         const wasLiked = post.isLiked;
 
-        // Оптимистичный UI
         runInAction(() => {
             post.isLiked = !wasLiked;
             post.likesCount = wasLiked ? post.likesCount - 1 : post.likesCount + 1;
@@ -132,13 +151,11 @@ class PostStore {
         try {
             const response = await apiClient.post<postDto>(`/api/v1/posts/${postId}/like`);
             runInAction(() => {
-                // Принудительно синхронизируем точные данные, пришедшие из Java базы данных
                 this.posts[postIndex].likesCount = Number(response.data.likesCount) || 0;
                 this.posts[postIndex].isLiked = Boolean(response.data.isLiked);
             });
         } catch (error) {
             console.error("Ошибка лайка:", error);
-            // Откат интерфейса при сбое сети
             runInAction(() => {
                 post.isLiked = wasLiked;
                 post.likesCount = wasLiked ? post.likesCount + 1 : post.likesCount - 1;
@@ -146,7 +163,6 @@ class PostStore {
         }
     }
 
-    // Комментарии (Оптимистичный UI)
     async addComment(postId: number, content: string) {
         if (!content.trim()) return;
 
@@ -174,7 +190,7 @@ class PostStore {
         }
     }
 
-    // ПОЛНОЦЕННЫЙ МЕХАНИЗМ РЕПОСТОВ (Включение / Отмена с Оптимистичным UI)
+    // ИСПРАВЛЕНО: Полностью закрыт синтаксический обрыв метода репостов
     async toggleRetweet(postId: number) {
         const postIndex = this.posts.findIndex(p => p.id === postId);
         if (postIndex === -1) return;
@@ -196,48 +212,35 @@ class PostStore {
                     );
                 });
             } else {
-                // ИСПРАВЛЕНО: Заменили <any> на <unknown> для соответствия правилам ESLint
                 const response = await apiClient.post<unknown>('/api/v1/posts/' + postId + '/retweet');
                 
                 runInAction(() => {
-                    // Приводим данные к безопасному объектному типу Record
                     const incomingPost = response.data as Record<string, unknown>;
                     const incomingAuthor = incomingPost.author as { username: string; name: string } | undefined;
-                    const incomingParent = incomingPost.parentPost as Record<string, unknown> | undefined;
 
-                    // ПРОВЕРКА: Если бэк вернул пост, который уже есть в самом верху массива, не дублируем его
                     const isAlreadyInFeed = this.posts.some((p, idx) => 
                         idx < 2 && p.id === Number(incomingPost.id) && p.author?.username === incomingAuthor?.username
                     );
 
                     if (!isAlreadyInFeed) {
-                        const formattedRepost = {
-                            ...incomingPost,
+                        const formattedRepost: IPost = {
                             id: Number(incomingPost.id),
                             content: String(incomingPost.content || ""),
                             imageUrl: incomingPost.imageUrl ? String(incomingPost.imageUrl) : undefined,
                             createdAt: String(incomingPost.createdAt || ""),
-                            author: incomingAuthor,
-                            parentPost: incomingParent,
-                            
+                            author: (incomingAuthor || { username: authStore.user?.username || "user", name: "Пользователь" }),
+                            parentPost: incomingPost.parentPost as IPost | undefined,
+                            comments: incomingPost.comments as IComment[] | undefined,
                             likesCount: Number(incomingPost.likesCount) || 0,
-                            retweetsCount: Number(incomingPost.retweetsCount) || Number(incomingPost.retweetCount) || 0,
+                            retweetsCount: Number(incomingPost.retweetsCount) || 0,
                             repliesCount: Number(incomingPost.repliesCount) || 0,
                             isLiked: Boolean(incomingPost.isLiked),
-                            isRetweeted: Boolean(incomingPost.isRetweeted)
-                        } as unknown as IPost;
-
+                            isRetweeted: true
+                        };
                         this.posts.unshift(formattedRepost);
-                    }
-
-                    if (incomingParent) {
-                        post.retweetsCount = Number(incomingParent.retweetsCount) ||
-                            Number(incomingParent.retweetCount) || 0;
                     }
                 });
             }
-
-
         } catch (error) {
             console.error("Ошибка репоста:", error);
             runInAction(() => {

@@ -16,11 +16,13 @@ import ru.parus.chirp.model.dto.post.PostDto;
  */
 public interface PostService {
     PostDto create(final PostDto dto);
-    Page<PostDto> index(final Pageable pageable);
+    Page<PostDto> index(Pageable pageable, String username, int userId);
     PostDto show(Long id);
     PostDto update(Long id, final PostDto dto);
     PostDto createWithFile(String content, MultipartFile file);
     PostDto toggleLike(Long id);
+
+
 
     PostDto addComment(Long id, PostDto commentDto);
 

@@ -11,14 +11,25 @@ const Layout = observer(() => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Загрузка профиля пользователя
-        if (authStore.isAuthenticated && !authStore.user) {
-            authStore.fetchProfile();
-        }
-        
-        // ДОБАВИТЬ: Автоматическая загрузка ленты из БД Spring Boot при инициализации сайта
-        postStore.fetchPosts();
-    }, []);
+        const initializeApplication = async () => {
+            // 1. Сначала строго дожидаемся загрузки профиля, если токен есть, а юзера в сторе еще нет
+            if (authStore.isAuthenticated && !authStore.user) {
+                try {
+                    // Если fetchProfile возвращает промис — await заставит код остановиться и подождать
+                    await authStore.fetchProfile();
+                } catch (error) {
+                    console.error("Ошибка при инициализации профиля:", error);
+                }
+            }
+
+            // 2. Только после того, как профиль получен (или проверен), загружаем посты из бэкенда
+            if (typeof postStore.fetchPosts === 'function') {
+                await postStore.fetchPosts();
+            }
+        };
+
+        initializeApplication();
+    }, []); // Срабатывает строго 1 раз при монтировании лейаута после F5
 
 
     const handleLogout = () => {
@@ -27,8 +38,7 @@ const Layout = observer(() => {
     };
 
     const linkClass = (path: string) =>
-        `flex items-center gap-4 p-3 rounded-full transition-all duration-200 ${
-            location.pathname === path ? 'font-black text-blue-600 bg-blue-50' : 'hover:bg-gray-100 text-slate-800'
+        `flex items-center gap-4 p-3 rounded-full transition-all duration-200 ${location.pathname === path ? 'font-black text-blue-600 bg-blue-50' : 'hover:bg-gray-100 text-slate-800'
         }`;
 
     return (

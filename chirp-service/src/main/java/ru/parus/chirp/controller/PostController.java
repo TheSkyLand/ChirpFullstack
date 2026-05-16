@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.parus.chirp.model.dto.post.PostDto;
 import ru.parus.chirp.service.PostService;
 
+import java.security.Principal;
+
 /**
  * PostController
  * <p>
@@ -32,7 +34,6 @@ public class PostController {
 
     private final PostService postService;
 
-    // Исправлено: поддержка отправки картинок и текста (FormData) вместо строгого @RequestBody JSON
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Создание поста с картинкой или без")
     public ResponseEntity<PostDto> create(
@@ -43,7 +44,6 @@ public class PostController {
         return ResponseEntity.ok(postService.createWithFile(content, file));
     }
 
-    // Дополнительный метод для обратной совместимости, если фронт шлет чистый JSON без картинок
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PostDto> createJson(@RequestBody PostDto dto) {
         return ResponseEntity.ok(postService.create(dto));
@@ -54,14 +54,12 @@ public class PostController {
         return ResponseEntity.ok(postService.toggleLike(id));
     }
 
-    // Создание простого репоста
     @PostMapping("/{id}/retweet")
     @Operation(summary = "Сделать репост записи")
     public ResponseEntity<PostDto> retweet(@PathVariable Long id) {
         return ResponseEntity.ok(postService.retweet(id));
     }
 
-    // ИСПРАВЛЕНО: Добавлен эндпоинт отмены репоста (Unretweet) для оптимистичного UI фронтенда
     @DeleteMapping("/{id}/retweet")
     @Operation(summary = "Отменить репост записи")
     public ResponseEntity<Void> unretweet(@PathVariable Long id) {
@@ -69,7 +67,6 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    // ИСПРАВЛЕНО: Добавлен недостающий эндпоинт для комментариев
     @PostMapping("/{id}/comments")
     @Operation(summary = "Добавить комментарий к посту")
     public ResponseEntity<PostDto> addComment(
@@ -80,16 +77,21 @@ public class PostController {
         return ResponseEntity.ok(postService.addComment(id, commentDto));
     }
 
-
-
-    // Убран Trailing Slash для избежания 404 ошибок в Axios
     @GetMapping
     @Operation(summary = "Просмотр постов пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
-    public ResponseEntity<Page<PostDto>> index(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(postService.index(pageable));
+    public ResponseEntity<Page<PostDto>> index(
+            @PageableDefault Pageable pageable,
+            Principal principal) {
+
+        String username = (principal != null) ? principal.getName() : null;
+        log.info("Запрос ленты постов для пользователя: {}", username);
+
+        // ИСПРАВЛЕНО: Передаем 3 аргумента (pageable, username, и 0 в качестве userId),
+        // чтобы строго соответствовать сигнатуре вашего PostServiceImpl.java
+        return ResponseEntity.ok(postService.index(pageable, username, 0));
     }
 
     @GetMapping("/{id}")

@@ -82,24 +82,27 @@ const Profile = observer(() => {
           </button>
         ))}
       </div>
-
 <div className="divide-y divide-gray-50">
   {postStore.posts
     .filter(p => {
-      // ИСПРАВЛЕНО: Пост считается вашим, если вы его автор ИЛИ если вы его репостнули (вы владелец корневого репоста)
-      const isMyPost = p.author?.username === user?.username;
+      // Пост ваш, если вы прямой автор
+      const isAuthor = p.author?.username === user?.username;
       
-      if (activeTab === 'Посты') return isMyPost;
-      if (activeTab === 'Медиа') return isMyPost && p.imageUrl; // Только с картинками
-      if (activeTab === 'Нравится') return p.isLiked; // Все, что лайкнул (даже чужие)
+      // Пост ваш, если это репост И вы его сделали (автор репоста — вы)
+      const isMyRepost = p.parentPost && p.author?.username === user?.username;
+
+      const isMyContent = isAuthor || isMyRepost;
       
-      return isMyPost;
+      if (activeTab === 'Посты') return isMyContent;
+      if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
+      if (activeTab === 'Нравится') return p.isLiked;
+      
+      return isMyContent;
     })
-    .map(post => {
-      // ИСПРАВЛЕНО: Генерация гарантированно уникального ключа для React, чтобы избавиться от ошибок дублирования ID
+    .map((post, index) => {
       const uniqueKey = post.parentPost 
-        ? `repost-${post.id}-${post.author?.username}` 
-        : `post-${post.id}`;
+        ? `profile-repost-${post.id}-${post.author?.username || 'user'}-${index}` 
+        : `profile-post-${post.id}-${index}`;
 
       return (
         <Post key={uniqueKey} post={post} />
@@ -107,19 +110,24 @@ const Profile = observer(() => {
     })
   }
 
-  {/* Проверка на пустоту для конкретной вкладки */}
+  {/* Проверка на пустоту */}
   {postStore.posts.filter(p => {
-      const isMyPost = p.author?.username === user?.username;
-      if (activeTab === 'Посты') return isMyPost;
-      if (activeTab === 'Медиа') return isMyPost && p.imageUrl;
+      const isAuthor = p.author?.username === user?.username;
+      const isMyRepost = p.parentPost && p.author?.username === user?.username;
+      const isMyContent = isAuthor || isMyRepost;
+
+      if (activeTab === 'Посты') return isMyContent;
+      if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
       if (activeTab === 'Нравится') return p.isLiked;
-      return isMyPost;
+      return isMyContent;
   }).length === 0 && (
     <div className="p-10 text-center text-slate-400 font-medium">
       На вкладке "{activeTab}" пока ничего нет 🌌
     </div>
   )}
 </div>
+
+
 
 
     </div>
