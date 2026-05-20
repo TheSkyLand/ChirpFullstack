@@ -82,50 +82,50 @@ const Profile = observer(() => {
           </button>
         ))}
       </div>
-<div className="divide-y divide-gray-50">
-  {postStore.posts
-    .filter(p => {
-      // Пост ваш, если вы прямой автор
-      const isAuthor = p.author?.username === user?.username;
-      
-      // Пост ваш, если это репост И вы его сделали (автор репоста — вы)
-      const isMyRepost = p.parentPost && p.author?.username === user?.username;
+      <div className="divide-y divide-gray-50">
+        {postStore.posts
+          .filter(p => {
+            // Пост ваш, если вы прямой автор
+            const isAuthor = p.author?.username === user?.username;
 
-      const isMyContent = isAuthor || isMyRepost;
-      
-      if (activeTab === 'Посты') return isMyContent;
-      if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
-      if (activeTab === 'Нравится') return p.isLiked;
-      
-      return isMyContent;
-    })
-    .map((post, index) => {
-      const uniqueKey = post.parentPost 
-        ? `profile-repost-${post.id}-${post.author?.username || 'user'}-${index}` 
-        : `profile-post-${post.id}-${index}`;
+            // Пост ваш, если это репост И вы его сделали (автор репоста — вы)
+            const isMyRepost = p.parentPost && p.author?.username === user?.username;
 
-      return (
-        <Post key={uniqueKey} post={post} />
-      );
-    })
-  }
+            const isMyContent = isAuthor || isMyRepost;
 
-  {/* Проверка на пустоту */}
-  {postStore.posts.filter(p => {
-      const isAuthor = p.author?.username === user?.username;
-      const isMyRepost = p.parentPost && p.author?.username === user?.username;
-      const isMyContent = isAuthor || isMyRepost;
+            if (activeTab === 'Посты') return isMyContent;
+            if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
+            if (activeTab === 'Нравится') return p.isLiked;
 
-      if (activeTab === 'Посты') return isMyContent;
-      if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
-      if (activeTab === 'Нравится') return p.isLiked;
-      return isMyContent;
-  }).length === 0 && (
-    <div className="p-10 text-center text-slate-400 font-medium">
-      На вкладке "{activeTab}" пока ничего нет 🌌
-    </div>
-  )}
-</div>
+            return isMyContent;
+          })
+          .map((post, index) => {
+            const uniqueKey = post.parentPost
+              ? `profile-repost-${post.id}-${post.author?.username || 'user'}-${index}`
+              : `profile-post-${post.id}-${index}`;
+
+            return (
+              <Post key={uniqueKey} post={post} />
+            );
+          })
+        }
+
+        {/* Проверка на пустоту */}
+        {postStore.posts.filter(p => {
+          const isAuthor = p.author?.username === user?.username;
+          const isMyRepost = p.parentPost && p.author?.username === user?.username;
+          const isMyContent = isAuthor || isMyRepost;
+
+          if (activeTab === 'Посты') return isMyContent;
+          if (activeTab === 'Медиа') return isMyContent && (p.imageUrl || p.parentPost?.imageUrl);
+          if (activeTab === 'Нравится') return p.isLiked;
+          return isMyContent;
+        }).length === 0 && (
+            <div className="p-10 text-center text-slate-400 font-medium">
+              На вкладке "{activeTab}" пока ничего нет 🌌
+            </div>
+          )}
+      </div>
 
 
 

@@ -2,7 +2,7 @@ import { Image, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useRef, useState, useEffect } from 'react';
 import { postStore } from '../store/PostStore';
-import Post from '../components/Post';
+import CustomPost from '../components/CustomPost';
 
 const Feed = observer(() => {
     const [text, setText] = useState("");
@@ -94,7 +94,7 @@ const Feed = observer(() => {
                             ? `repost-${postItem.id}-${index}`
                             : `post-${postItem.id}-${index}`;
 
-                        return <Post key={uniqueKey} post={postItem} />;
+                        return <CustomPost key={uniqueKey}/>;
                     })
                 ) : (
                     // Если в базе 0 постов, форма создания останется сверху, а внизу покажется заглушка

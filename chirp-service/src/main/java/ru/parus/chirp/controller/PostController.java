@@ -28,7 +28,7 @@ import java.security.Principal;
  */
 @Slf4j
 @RestController
-@RequestMapping(value = "/api/v1/posts", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/posts/", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PostController {
 
