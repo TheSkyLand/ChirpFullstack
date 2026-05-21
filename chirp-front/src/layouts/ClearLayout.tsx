@@ -1,31 +1,20 @@
-import { useEffect } from "react";
-import { observer } from "mobx-react-lite";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, User, Home, Hash, Bookmark, MessageSquare, LogOut } from "lucide-react";
-import { authStore } from "../store/AuthStore";
 import SearchBar from "../components/SearchBar";
 
-const Layout = observer(() => {
+// Описываем типы для чистого TS
+interface LayoutProps {
+    isAuthenticated: boolean;
+    user: { username: string } | null;
+    onLogout: () => void;
+}
+
+const Layout = ({ isAuthenticated, user, onLogout }: LayoutProps) => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Инициализация профиля при первой загрузке (F5)
-    useEffect(() => {
-        const loadUserProfile = async () => {
-            if (authStore.isAuthenticated && !authStore.user) {
-                try {
-                    await authStore.fetchProfile();
-                } catch(error) {
-                    console.error("Ошибка при загрузке профиля:", error);
-                }
-            }
-        };
-
-        loadUserProfile();
-    }, []);
-
     const handleLogout = () => {
-        authStore.logout();
+        onLogout();
         navigate('/login');
     };
 
@@ -57,7 +46,7 @@ const Layout = observer(() => {
 
                     {/* Блок авторизации / Профиль */}
                     <div className="flex-1 flex justify-end gap-3">
-                        {!authStore.isAuthenticated ? (
+                        {!isAuthenticated ? (
                             <div className="flex gap-2">
                                 <Link to="/login" className="px-4 py-2 font-bold text-slate-700 hover:text-blue-600 transition-colors">Войти</Link>
                                 <Link to="/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95">Регистрация</Link>
@@ -68,7 +57,7 @@ const Layout = observer(() => {
                                     <Bell size={24} />
                                 </Link>
                                 <Link to="/profile" className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold border-2 border-transparent hover:border-blue-200 transition-all shadow-sm">
-                                    {authStore.user?.username ? authStore.user.username[0].toUpperCase() : <User size={20} />}
+                                    {user?.username ? user.username[0].toUpperCase() : <User size={20} />}
                                 </Link>
                             </div>
                         )}
@@ -85,7 +74,7 @@ const Layout = observer(() => {
                         <Link to="/" className={getLinkStyle('/')}><Home size={26} /> <span>Главная</span></Link>
                         <Link to="/explore" className={getLinkStyle('/explore')}><Hash size={26} /> <span>Обзор</span></Link>
                         
-                        {authStore.isAuthenticated && (
+                        {isAuthenticated && (
                             <>
                                 <Link to="/messages" className={getLinkStyle('/messages')}><MessageSquare size={26} /> <span>Сообщения</span></Link>
                                 <Link to="/bookmarks" className={getLinkStyle('/bookmarks')}><Bookmark size={26} /> <span>Закладки</span></Link>
@@ -104,11 +93,11 @@ const Layout = observer(() => {
                     <Outlet />
                 </section>
 
-                {/* Правая колонка (заглушка) */}
+                {/* Правая колонка */}
                 <aside className="hidden xl:block w-[350px] shrink-0 sticky top-16 h-fit py-4 pl-4" />
             </main>
         </div>
     );
-});
+};
 
 export default Layout;

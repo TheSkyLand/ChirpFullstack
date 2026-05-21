@@ -90,11 +90,11 @@ const Feed = observer(() => {
                     </div>
                 ) : postStore.posts.length > 0 ? (
                     postStore.posts.map((postItem, index) => {
-                        const uniqueKey = postItem.parentPost
-                            ? `repost-${postItem.id}-${index}`
-                            : `post-${postItem.id}-${index}`;
+                        // const uniqueKey = postItem.parentPost
+                        //     ? `repost-${postItem.id}-${index}`
+                        //     : `post-${postItem.id}-${index}`;
 
-                        return <CustomPost key={uniqueKey}/>;
+                        return <CustomPost key={index}/>;
                     })
                 ) : (
                     // Если в базе 0 постов, форма создания останется сверху, а внизу покажется заглушка

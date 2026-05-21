@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import apiClient from "../api/config";
 import { authStore } from "./AuthStore";
-import type { postDto } from "../types/post.types";
+import type { PostDto } from "../types/post/post.types";
 
 export interface IComment {
     id: number;
@@ -149,7 +149,7 @@ class PostStore {
         });
 
         try {
-            const response = await apiClient.post<postDto>(`/api/v1/posts/${postId}/like`);
+            const response = await apiClient.post<PostDto>(`/api/v1/posts/${postId}/like`);
             runInAction(() => {
                 this.posts[postIndex].likesCount = Number(response.data.likesCount) || 0;
                 this.posts[postIndex].isLiked = Boolean(response.data.isLiked);

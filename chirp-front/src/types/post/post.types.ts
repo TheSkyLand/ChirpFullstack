@@ -1,4 +1,4 @@
-export type postDto = {
+export type PostDto = {
     id: number;
     content: string;
     imageUrl?: string;
@@ -16,7 +16,7 @@ export type postDto = {
     isLiked: boolean;
     isRetweeted: boolean;
     // Рекурсивная связь для репостов
-    parentPost?: postDto; 
+    parentPost?: PostDto; 
     // Массив комментариев
     comments?: Array<{
         id: number;
