@@ -111,6 +111,15 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PostDto showUserPosts(Long owner) {
+        // 1. Просто получаем список. Если постов нет, вернется пустой список.
+        List<PostEntity> posts = postRepository.findByOwnerId(owner);
+        // 3. Используем метод маппера для списков (toDtos или toDtoList, в зависимости от вашего маппера)
+        return (PostDto) postMapper.toDtos(posts);
+    }
+
+    @Override
     @Transactional
     public PostDto update(Long id, PostDto dto) {
         UserEntity user = userService.getCurrentUserEntity();

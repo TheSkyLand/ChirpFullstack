@@ -29,8 +29,6 @@ public class PostEntity extends BaseEntity {
     @Column(name = "content", nullable = false)
     private String content;
 
-    // --- ДОБАВЬ ЭТО: ---
-
     @Column(name = "image_url")
     private String imageUrl; // Путь к картинке
 

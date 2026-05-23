@@ -11,8 +11,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.parus.chirp.model.UserEntity;
 import ru.parus.chirp.model.dto.UserDto;
+import ru.parus.chirp.model.dto.post.PostDto;
+import ru.parus.chirp.service.PostService;
 import ru.parus.chirp.service.UserService;
+
+import java.security.Principal;
 
 /**
  * UserController
@@ -31,15 +36,19 @@ public class UserController {
 
 
     private final UserService userService;
+    private final PostService postService;
 
     @Operation(summary = "Просмотр текущихх пользователей в системе")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
+
     @GetMapping("/")
     public ResponseEntity<Page<UserDto>> index(@PageableDefault Pageable pageable, @RequestParam(required = false) String username) {
         return ResponseEntity.ok(userService.index(pageable, username));
     }
+
+
 
     @Operation(summary = "Просмотр информации о пользователе")
     @ApiResponses(value = {
@@ -50,6 +59,15 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> show(@PathVariable Long id) {
         return ResponseEntity.ok(userService.show(id));
+    }
+
+    @GetMapping("/{owner}/retweets")
+    public ResponseEntity<Page<PostDto>> retweets(
+            @PathVariable Long owner,
+            @PageableDefault Pageable pageable
+    ) {
+
+        return ResponseEntity.ok((Page<PostDto>) postService.showUserPosts(owner));
     }
 
 }

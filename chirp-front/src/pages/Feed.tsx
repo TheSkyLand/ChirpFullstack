@@ -2,13 +2,17 @@ import { Image, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useRef, useState, useEffect } from 'react';
 import { postStore } from '../store/PostStore';
-import CustomPost from '../components/CustomPost';
+import Post from '../components/Post';
 
 const Feed = observer(() => {
     const [text, setText] = useState("");
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+        useEffect(() => {
+        postStore.fetchPosts();
+    }, []);
 
     // Очистка памяти от картинок
     useEffect(() => {
@@ -90,11 +94,11 @@ const Feed = observer(() => {
                     </div>
                 ) : postStore.posts.length > 0 ? (
                     postStore.posts.map((postItem, index) => {
-                        // const uniqueKey = postItem.parentPost
-                        //     ? `repost-${postItem.id}-${index}`
-                        //     : `post-${postItem.id}-${index}`;
+                        const uniqueKey = postItem.parentPost
+                            ? `repost-${postItem.id}-${index}`
+                            : `post-${postItem.id}-${index}`;
 
-                        return <CustomPost key={index}/>;
+                        return <Post post={postItem} key={uniqueKey} />;
                     })
                 ) : (
                     // Если в базе 0 постов, форма создания останется сверху, а внизу покажется заглушка

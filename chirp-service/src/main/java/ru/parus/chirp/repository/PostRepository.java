@@ -22,5 +22,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     Optional<PostEntity> findByParentPostAndOwner(PostEntity parentPost, UserEntity owner);
 
     List<PostEntity> findAllByOwner(UserEntity userEntity);
+    List<PostEntity> findByOwnerId(Long owner);
+
     long countByOwner(UserEntity userEntity);
 }

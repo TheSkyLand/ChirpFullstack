@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import apiClient from "../api/config";
-import { authStore } from "./AuthStore";
+import { authStore } from "../store/AuthStore";
 import type { PostDto } from "../types/post/post.types";
 
 export interface IComment {
@@ -41,7 +41,7 @@ class PostStore {
     async fetchPosts() {
         this.isLoading = true;
         try {
-            const response = await apiClient.get<unknown>('/api/v1/posts');
+            const response = await apiClient.get<unknown>('/api/v1/posts/');
 
             runInAction(() => {
                 const dataObj = response.data as Record<string, unknown>;
@@ -53,7 +53,7 @@ class PostStore {
                 this.posts = rawPosts.map((p) => {
                     // ИСПРАВЛЕНИЕ АНОНИМОВ: Защита на фронтенде от null в поле author с бэкенда
                     let finalAuthor = { username: "user", name: "Пользователь" };
-                    
+
                     if (p.author && typeof p.author === 'object') {
                         finalAuthor = p.author as { username: string; name: string };
                     } else if (authStore.user) {
@@ -114,11 +114,11 @@ class PostStore {
                 formData.append('content', text);
                 formData.append('image', file);
 
-                response = await apiClient.post<IPost>('/api/v1/posts', formData, {
+                response = await apiClient.post<IPost>('/api/v1/posts/', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             } else {
-                response = await apiClient.post<IPost>('/api/v1/posts', { content: text });
+                response = await apiClient.post<IPost>('/api/v1/posts/', { content: text });
             }
 
             runInAction(() => {
@@ -213,7 +213,7 @@ class PostStore {
                 });
             } else {
                 const response = await apiClient.post<unknown>('/api/v1/posts/' + postId + '/retweet');
-                
+
                 runInAction(() => {
                     const incomingPost = response.data as Record<string, unknown>;
                     const incomingAuthor = incomingPost.author as { username: string; name: string } | undefined;

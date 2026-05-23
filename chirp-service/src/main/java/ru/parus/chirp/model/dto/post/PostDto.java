@@ -44,6 +44,7 @@ public class PostDto implements Serializable {
      */
     @Data
     public static class AuthorDto implements Serializable {
+        //private Long id;
         private String username;
         private String name;
     }

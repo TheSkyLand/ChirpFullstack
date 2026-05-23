@@ -10,6 +10,8 @@ import ru.parus.chirp.model.UserEntity;       // ИСПРАВЛЕНО: Прав�
 import ru.parus.chirp.model.CommentEntity;    // ИСПРАВЛЕНО: Добавлен импорт сущности комментариев
 import ru.parus.chirp.model.dto.post.PostDto;
 
+import java.util.List;
+
 /**
  * PostMapper
  * <p>
@@ -25,7 +27,9 @@ public interface PostMapper {
     @Mapping(target = "author", source = "owner")
     @Mapping(target = "userId", source = "owner.id")
     @Mapping(target = "parentPost.parentPost", ignore = true) // Пресекаем бесконечную вложенность
+
     PostDto toDto(PostEntity entity);
+    List<PostDto> toDtos(List<PostEntity> entities);
 
     @Mapping(target = "owner", ignore = true)
     PostEntity toEntity(PostDto dto);

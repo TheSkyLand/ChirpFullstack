@@ -22,6 +22,8 @@ const Post = observer(({ post }: { post: IPost }) => {
         postStore.addComment(currentPostData.id, commentText);
         setCommentText(""); 
     };
+    
+    
 
     // Если пост совсем пустой, отрендерим пустой контейнер, не ломая хуки React
     if (!post) return <div className="hidden" />;

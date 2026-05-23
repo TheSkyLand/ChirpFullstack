@@ -1,7 +1,7 @@
 import apiClient from "../../config";
-import { PostDto } from "../../../types/post/post.types";
-import { Pageable } from "../../../types/common/pageable.types";
-import { PageableObject } from "../../../types/page/page.types";
+import type { PostDto } from "../../../types/post/post.types";
+import type { Pageable } from "../../../types/common/pageable.types";
+import type { PageableObject } from "../../../types/page/page.types";
 
 export const postsController = {
     getPosts: (pageable: Pageable) => {

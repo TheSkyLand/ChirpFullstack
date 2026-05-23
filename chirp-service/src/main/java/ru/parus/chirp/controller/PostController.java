@@ -12,10 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.parus.chirp.model.PostEntity;
 import ru.parus.chirp.model.dto.post.PostDto;
 import ru.parus.chirp.service.PostService;
 
 import java.security.Principal;
+import java.util.List;
 
 /**
  * PostController
@@ -83,7 +85,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "Успешный ответ"),
     })
     public ResponseEntity<Page<PostDto>> index(
-            @PageableDefault Pageable pageable,
+            @PageableDefault
+            Pageable pageable,
             Principal principal) {
 
         String username = (principal != null) ? principal.getName() : null;
@@ -94,6 +97,7 @@ public class PostController {
         return ResponseEntity.ok(postService.index(pageable, username, 0));
     }
 
+
     @GetMapping("/{id}")
     @Operation(summary = "Просмотр поста пользователя")
     @ApiResponses(value = {
@@ -102,6 +106,8 @@ public class PostController {
     public ResponseEntity<PostDto> show(@PathVariable Long id) {
         return ResponseEntity.ok(postService.show(id));
     }
+
+
 
     @PatchMapping("/{id}")
     @Operation(summary = "Обновление поста пользователя", description = "Требуется авторизация")
@@ -115,4 +121,6 @@ public class PostController {
         postService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+
 }
