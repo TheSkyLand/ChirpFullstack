@@ -10,23 +10,31 @@ import AuthLayout from '../layouts/AuthLayout';
 
 const AppRouter = () => {
   return (
-<Routes>
-  {/* Группа Авторизации */}
-  <Route element={<AuthLayout />}>
-    <Route path="login" element={<LoginPage />} />
-    <Route path="register" element={<RegisterPage />} />
-  </Route>
+    <Routes>
+      {/* Группа Авторизации */}
+      <Route element={<AuthLayout />}>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+      </Route>
 
-  {/* Группа Основного приложения */}
-  <Route element={<Layout />}>
-    <Route index element={<Feed />} />
-    <Route path="profile" element={<Profile />} />
-    <Route path="explore" element={<Explore />} />
-    <Route path="notifications" element={<Notifications />} />
-  </Route>
+      {/* Группа Основного приложения */}
+      {/* Группа Основного приложения */}
+      <Route element={<Layout />}>
+        <Route index element={<Feed />} />
 
-  <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>
+        {/* ИСПРАВЛЕНО: Сохраняем твой оригинальный путь, чтобы сидебар не ломался */}
+        <Route path="profile" element={<Profile />} />
+
+        {/* ДОБАВЛЕНО: Новый отдельный путь для открытия страниц других пользователей */}
+        <Route path="profile/:username" element={<Profile />} />
+
+        <Route path="explore" element={<Explore />} />
+        <Route path="notifications" element={<Notifications />} />
+      </Route>
+
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 

@@ -23,11 +23,9 @@ import java.util.List;
 /**
  * PostServiceImpl
  * <p>
- *     Базовая реализация сервиса постов
+ *     Сервис для работы с публикациями пользователей, репостами и лайками.
+ *     Исправлена ленивая инициализация авторов оригинальных постов.
  * </p>
- *
- * @author Grachev.D.G  (zhulvern-92@mail.ru)
- * @version 30.01.2026
  */
 @Slf4j
 @Service
@@ -45,6 +43,7 @@ public class PostServiceImpl implements PostService {
         UserEntity user = userService.getCurrentUserEntity();
         PostEntity postEntity = postMapper.toEntity(dto);
         postEntity.setOwner(user);
+
         var result = postMapper.toDto(postRepository.save(postEntity));
         notificationService.notifyAsyncNewPost(user.getId());
         return result;
@@ -55,40 +54,34 @@ public class PostServiceImpl implements PostService {
     public PostDto addComment(Long id, PostDto commentDto) {
         log.info("Добавление комментария к посту с ID: {}", id);
 
-        // 1. Находим оригинальный пост, под которым пишется комментарий
-        PostEntity originalPost = postRepository.findById(id)
+        // Используем findWithGraphById, чтобы избежать LazyInitializationException для авторов
+        PostEntity originalPost = postRepository.findWithGraphById(id)
                 .orElseThrow(NotExistException::new);
 
-        // 2. Получаем текущего авторизованного пользователя
         UserEntity currentUser = userService.getCurrentUserEntity();
 
-        // 3. Создаем новую сущность поста, которая будет выступать в роли комментария
         PostEntity commentEntity = new PostEntity();
         commentEntity.setOwner(currentUser);
-        commentEntity.setContent(commentDto.getContent()); // Берем текст из пришедшего JSON
-        commentEntity.setParentPost(originalPost);         // Привязываем к родительскому посту
+        commentEntity.setContent(commentDto.getContent());
+        commentEntity.setParentPost(originalPost);
 
-        // 4. Сохраняем в базу данных
         PostEntity savedComment = postRepository.save(commentEntity);
 
-        // 5. Асинхронно отправляем уведомление автору оригинального поста (опционально, если нужно)
-        // notificationService.notifyAsyncNewComment(originalPost.getOwner().getId(), currentUser.getUsername());
+        PostEntity cleanComment = postRepository.findWithGraphById(savedComment.getId())
+                .orElseThrow(NotExistException::new);
 
-        // 6. Маппим в DTO и возвращаем на фронтенд
-        return postMapper.toDto(savedComment);
+        return postMapper.toDto(cleanComment);
     }
 
-
     @Override
+    @Transactional(readOnly = true)
     public Page<PostDto> index(Pageable pageable, String username, int userId) {
         Page<PostEntity> pageEntities = postRepository.findAll(pageable);
-        UserEntity currentUser = userService.getCurrentUserEntity(); // получаем юзера для лайков
+        UserEntity currentUser = userService.getCurrentUserEntity();
 
         List<PostDto> dtoList = pageEntities.getContent().stream().map(postEntity -> {
-            // Теперь маппер САМ идеально соберет объект author и userId!
             PostDto dto = postMapper.toDto(postEntity);
 
-            // Оставляем только динамический расчет флагов для текущей сессии
             if (currentUser != null) {
                 dto.setIsLiked(postEntity.getLikes() != null && postEntity.getLikes().contains(currentUser));
                 dto.setIsRetweeted(postRepository.existsByParentPostAndOwner(postEntity, currentUser));
@@ -101,29 +94,29 @@ public class PostServiceImpl implements PostService {
         return new PageImpl<>(dtoList, pageable, pageEntities.getTotalElements());
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public PostDto show(Long id) {
-        PostEntity post = postRepository.findById(id)
+        // ИСПРАВЛЕНО: Загружаем через граф, чтобы parentPost.author не был null
+        PostEntity post = postRepository.findWithGraphById(id)
                 .orElseThrow(NotExistException::new);
         return postMapper.toDto(post);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PostDto showUserPosts(Long owner) {
-        // 1. Просто получаем список. Если постов нет, вернется пустой список.
+    public List<PostDto> showUserPosts(Long owner) {
+        // ИСПРАВЛЕНО: Изменен тип возвращаемого значения с PostDto на List<PostDto>, удален ClassCastException
         List<PostEntity> posts = postRepository.findByOwnerId(owner);
-        // 3. Используем метод маппера для списков (toDtos или toDtoList, в зависимости от вашего маппера)
-        return (PostDto) postMapper.toDtos(posts);
+        return postMapper.toDtos(posts);
     }
 
     @Override
     @Transactional
     public PostDto update(Long id, PostDto dto) {
         UserEntity user = userService.getCurrentUserEntity();
-        PostEntity post = postRepository.findById(id).orElseThrow(NotExistException::new);
+        PostEntity post = postRepository.findWithGraphById(id).orElseThrow(NotExistException::new);
+
         if (post.getOwner().getId().equals(user.getId())) {
             postMapper.patchUpdate(dto, post);
             postRepository.save(post);
@@ -138,6 +131,7 @@ public class PostServiceImpl implements PostService {
         UserEntity user = userService.getCurrentUserEntity();
         PostEntity post = postRepository.findById(id)
                 .orElseThrow(NotExistException::new);
+
         if (post.getOwner().getId().equals(user.getId())) {
             postRepository.delete(post);
             return;
@@ -166,7 +160,8 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostDto toggleLike(Long id) {
-        PostEntity post = postRepository.findById(id).orElseThrow(NotExistException::new);
+        // ИСПРАВЛЕНО: Загружаем через граф, чтобы не затереть авторов при обновлении лайка
+        PostEntity post = postRepository.findWithGraphById(id).orElseThrow(NotExistException::new);
         UserEntity user = userService.getCurrentUserEntity();
 
         if (post.getLikes().contains(user)) {
@@ -181,16 +176,13 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostDto retweet(Long id) {
-        PostEntity original = postRepository.findById(id).orElseThrow(NotExistException::new);
+        PostEntity original = postRepository.findWithGraphById(id).orElseThrow(NotExistException::new);
         UserEntity user = userService.getCurrentUserEntity();
 
-        // Если пользователь пытается репостнуть уже существующий репост,
-        // мы автоматически привязываем новый репост к первоисточнику (оригинальному автору контента)
         if (original.getParentPost() != null) {
             original = original.getParentPost();
         }
 
-        // ИСПРАВЛЕНО: Предотвращаем дублирование репостов от одного и того же человека
         boolean alreadyRetweeted = postRepository.existsByParentPostAndOwner(original, user);
         if (alreadyRetweeted) {
             log.warn("Пользователь {} уже делал репост публикации {}", user.getUsername(), original.getId());
@@ -200,17 +192,19 @@ public class PostServiceImpl implements PostService {
         PostEntity retweet = new PostEntity();
         retweet.setOwner(user);
         retweet.setParentPost(original);
-        retweet.setContent(""); // Для простого репоста текст пустой
+        retweet.setContent("");
 
         PostEntity savedRetweet = postRepository.save(retweet);
 
-        // Отправляем системное асинхронное уведомление автору оригинального контента
         notificationService.notifyAsyncRepost(original.getOwner().getId(), user.getUsername());
 
-        return postMapper.toDto(savedRetweet);
+        // 🟢 ИСПРАВЛЕНО: Перезапрашиваем репост с полной цепочкой связей перед отправкой, чтобы убрать null на фронте
+        PostEntity cleanRetweet = postRepository.findWithGraphById(savedRetweet.getId())
+                .orElseThrow(NotExistException::new);
+
+        return postMapper.toDto(cleanRetweet);
     }
 
-    // РЕАЛИЗОВАНО: Метод отмены репоста для обработки DELETE-запроса с фронтенда
     @Override
     @Transactional
     public void unretweet(Long id) {
@@ -221,7 +215,6 @@ public class PostServiceImpl implements PostService {
             original = original.getParentPost();
         }
 
-        // Ищем конкретный репост текущего пользователя к этому оригинальному посту
         PostEntity retweetToDelete = postRepository.findByParentPostAndOwner(original, user)
                 .orElseThrow(NotExistException::new);
 

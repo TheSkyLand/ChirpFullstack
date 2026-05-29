@@ -1,16 +1,41 @@
+import React, { useState, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
 import { authStore } from "../store/AuthStore";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom"; // 🟢 ДОБАВЛЕН useParams
 import { postStore } from "../store/PostStore";
 import Post from "../components/Post";
 
 const Profile = observer(() => {
   const [activeTab, setActiveTab] = useState('Посты');
-  const user = authStore.user;
+  
+  // 1. Извлекаем username из динамического пути роутера "profile/:username"
+  const { username } = useParams<{ username: string }>();
 
-  // Если загрузка идет ИЛИ токен есть, но юзера еще не подгрузили — показываем лоадер
-  if (authStore.isLoading || (localStorage.getItem('token') && !user)) {
+  // 2. Проверяем, смотрим ли мы свой собственный профиль
+  const isOwnProfile = !username || username === authStore.user?.username;
+
+  // 3. Выбираем, чьи данные отображать в шапке
+  // Если профиль наш — берем объект из authStore, если чужой — создаем временный объект на основе постов
+  const displayedUser = isOwnProfile ? authStore.user : {
+    username: username,
+    bio: "Пользователь Chirp 🚀",
+    following: 0,
+    followers: 0
+  };
+
+  // 4. При смене пользователя в URL заставляем стор подтянуть актуальную ленту
+  useEffect(() => {
+    if (!isOwnProfile && username) {
+        // Если у вас еще нет эндпоинта для чужих постов, мы можем временно вызывать fetchPosts(),
+        // а фронтенд ниже сам отфильтрует посты по username этого человека
+        postStore.fetchPosts(); 
+    } else {
+        postStore.fetchPosts(); // Для своего профиля грузим обычную ленту
+    }
+  }, [username, isOwnProfile]);
+
+  // Защита: Лоадер данных авторизации
+  if (authStore.isLoading || (localStorage.getItem('token') && !authStore.user)) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-4">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -19,12 +44,9 @@ const Profile = observer(() => {
     );
   }
 
-  // Теперь это сработает только если реально нет ни юзера, ни токена
-  if (!user && !authStore.isLoading) {
+  if (!authStore.user && !authStore.isLoading) {
     return <div className="p-20 text-center text-2xl font-black">Войдите в аккаунт</div>;
   }
-
-
   return (
     <div className="bg-white">
       {/* Обложка */}
@@ -35,34 +57,40 @@ const Profile = observer(() => {
         <div className="absolute -top-16 left-6">
           <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-2xl flex items-center justify-center">
             <div className="w-full h-full rounded-2xl bg-blue-50 flex items-center justify-center text-4xl font-black text-blue-600">
-              {user?.username ? user.username[0].toUpperCase() : '?'}
+              {displayedUser?.username ? displayedUser.username[0].toUpperCase() : '?'}
             </div>
           </div>
         </div>
 
-        {/* Кнопка редактирования */}
+        {/* Кнопка редактирования (Показывается ТОЛЬКО в своем профиле) */}
         <div className="flex justify-end pt-4">
-          <button className="px-5 py-2 border-2 border-slate-100 rounded-full font-bold hover:bg-slate-50 transition-all text-sm">
-            Редактировать
-          </button>
+          {isOwnProfile ? (
+            <button className="px-5 py-2 border-2 border-slate-100 rounded-full font-bold hover:bg-slate-50 transition-all text-sm">
+              Редактировать
+            </button>
+          ) : (
+            <button className="px-5 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-all text-sm shadow-md shadow-blue-100">
+              Читать
+            </button>
+          )}
         </div>
 
         {/* Инфо */}
         <div className="mt-8">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">{user?.username}</h1>
-          <p className="text-slate-500 font-medium leading-none">@{user?.username?.toLowerCase()}</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">{displayedUser?.username}</h1>
+          <p className="text-slate-500 font-medium leading-none">@{displayedUser?.username?.toLowerCase()}</p>
 
           <p className="mt-4 text-slate-700 leading-relaxed font-medium">
-            {user?.bio || "Стек: React, MobX, TypeScript 🚀"}
+            {displayedUser?.bio}
           </p>
 
           <div className="flex gap-4 mt-4 text-sm font-semibold">
-            <Link to={`/profile/${user?.username}/following`} className="hover:underline decoration-slate-400">
-              <span className="text-slate-900">{user?.following || 0}</span>
+            <Link to={`/profile/${displayedUser?.username}/following`} className="hover:underline decoration-slate-400">
+              <span className="text-slate-900">{displayedUser?.following || 0}</span>
               <span className="text-slate-400 font-medium ml-1">Читаемые</span>
             </Link>
-            <Link to={`/profile/${user?.username}/followers`} className="hover:underline decoration-slate-400">
-              <span className="text-slate-900">{user?.followers || 0}</span>
+            <Link to={`/profile/${displayedUser?.username}/followers`} className="hover:underline decoration-slate-400">
+              <span className="text-slate-900">{displayedUser?.followers || 0}</span>
               <span className="text-slate-400 font-medium ml-1">Читатели</span>
             </Link>
           </div>
@@ -82,15 +110,13 @@ const Profile = observer(() => {
           </button>
         ))}
       </div>
+      
+      {/* Список постов с фильтрацией под конкретного displayedUser */}
       <div className="divide-y divide-gray-50">
         {postStore.posts
           .filter(p => {
-            // Пост ваш, если вы прямой автор
-            const isAuthor = p.author?.username === user?.username;
-
-            // Пост ваш, если это репост И вы его сделали (автор репоста — вы)
-            const isMyRepost = p.parentPost && p.author?.username === user?.username;
-
+            const isAuthor = p.author?.username === displayedUser?.username;
+            const isMyRepost = p.parentPost && p.author?.username === displayedUser?.username;
             const isMyContent = isAuthor || isMyRepost;
 
             if (activeTab === 'Посты') return isMyContent;
@@ -112,8 +138,8 @@ const Profile = observer(() => {
 
         {/* Проверка на пустоту */}
         {postStore.posts.filter(p => {
-          const isAuthor = p.author?.username === user?.username;
-          const isMyRepost = p.parentPost && p.author?.username === user?.username;
+          const isAuthor = p.author?.username === displayedUser?.username;
+          const isMyRepost = p.parentPost && p.author?.username === displayedUser?.username;
           const isMyContent = isAuthor || isMyRepost;
 
           if (activeTab === 'Посты') return isMyContent;
@@ -126,10 +152,6 @@ const Profile = observer(() => {
             </div>
           )}
       </div>
-
-
-
-
     </div>
   );
 });

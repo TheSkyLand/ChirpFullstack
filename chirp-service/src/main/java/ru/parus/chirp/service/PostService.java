@@ -7,6 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.parus.chirp.model.PostEntity;
 import ru.parus.chirp.model.dto.post.PostDto;
 
+import java.util.List;
+
 /**
  * PostService
  * <p>
@@ -21,7 +23,7 @@ public interface PostService {
     Page<PostDto> index(Pageable pageable, String username, int userId);
     PostDto show(Long id);
 
-    PostDto showUserPosts(Long owner);
+    List<PostDto> showUserPosts(Long owner);
 
     PostDto update(Long id, final PostDto dto);
     PostDto createWithFile(String content, MultipartFile file);

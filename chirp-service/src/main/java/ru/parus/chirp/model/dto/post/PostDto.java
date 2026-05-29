@@ -21,7 +21,7 @@ public class PostDto implements Serializable {
     private String imageUrl;
     private String createdAt;
 
-    // 🔴 ИСПРАВЛЕНИЕ АНОНИМОВ: Объект автора, который так ждет React/MobX
+    // Объект автора, который ожидает React/MobX
     private AuthorDto author;
 
     // Рекурсивная связь для полноценных репостов
@@ -44,7 +44,8 @@ public class PostDto implements Serializable {
      */
     @Data
     public static class AuthorDto implements Serializable {
-        //private Long id;
+        // ИСПРАВЛЕНО: Раскомментировано. MapStruct требует этот Id для вызова setId() при маппинге из UserEntity
+        private Long id;
         private String username;
         private String name;
     }
