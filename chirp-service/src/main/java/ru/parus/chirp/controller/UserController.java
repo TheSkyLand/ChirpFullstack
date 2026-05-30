@@ -67,7 +67,7 @@ public class UserController {
             @PageableDefault Pageable pageable
     ) {
 
-        return ResponseEntity.ok((Page<PostDto>) postService.showUserPosts(owner));
+        return ResponseEntity.ok((Page<PostDto>) postService.wall());
     }
 
 }

@@ -7,6 +7,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.NullValueCheckStrategy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import ru.parus.chirp.model.PostEntity;
 import ru.parus.chirp.model.UserEntity;
 import ru.parus.chirp.model.CommentEntity;
@@ -39,7 +41,7 @@ public interface PostMapper {
     @Mapping(target = "parentPost.userId", source = "parentPost.owner.id")
     PostDto toDto(PostEntity entity);
 
-    List<PostDto> toDtos(List<PostEntity> entities);
+    //Page<PostDto> toDtos(PostEntity postEntity, Pageable pageable);
 
     @Mapping(target = "owner", ignore = true)
     PostEntity toEntity(PostDto dto);

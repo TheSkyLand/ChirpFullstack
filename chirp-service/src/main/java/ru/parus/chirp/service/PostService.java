@@ -23,7 +23,7 @@ public interface PostService {
     Page<PostDto> index(Pageable pageable, String username, int userId);
     PostDto show(Long id);
 
-    List<PostDto> showUserPosts(Long owner);
+    Page<PostDto> wall();
 
     PostDto update(Long id, final PostDto dto);
     PostDto createWithFile(String content, MultipartFile file);

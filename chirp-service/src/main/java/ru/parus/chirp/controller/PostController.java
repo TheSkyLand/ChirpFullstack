@@ -122,5 +122,9 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-
+    @GetMapping("/wall/")
+    @Operation(summary = "получить ВСЕ посты пользователя", description = "если не заработает даю сальтуху")
+    public ResponseEntity<Page<PostDto>> wall() {
+        return ResponseEntity.ok(postService.wall());
+    }
 }

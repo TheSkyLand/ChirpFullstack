@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,10 +106,11 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostDto> showUserPosts(Long owner) {
-        // ИСПРАВЛЕНО: Изменен тип возвращаемого значения с PostDto на List<PostDto>, удален ClassCastException
-        List<PostEntity> posts = postRepository.findByOwnerId(owner);
-        return postMapper.toDtos(posts);
+    public Page<PostDto> wall() {
+        UserEntity user = userService.getCurrentUserEntity();
+        Pageable pageable = PageRequest.of(0, 10);
+        return postRepository.findAllByOwner(user, pageable)
+                .map(postMapper::toDto);
     }
 
     @Override

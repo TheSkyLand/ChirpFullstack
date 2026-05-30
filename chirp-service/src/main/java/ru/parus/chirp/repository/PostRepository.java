@@ -1,6 +1,7 @@
 package ru.parus.chirp.repository;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.parus.chirp.model.PostEntity;
@@ -37,7 +38,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
     // ИСПРАВЛЕНО: Для загрузки постов конкретного юзера (например, в профиле) тоже нужен граф, иначе там репосты сломаются
     @EntityGraph(attributePaths = {"owner", "parentPost", "parentPost.owner"})
-    List<PostEntity> findAllByOwner(UserEntity userEntity);
+    Page<PostEntity> findAllByOwner(UserEntity owner, Pageable pageable  );
 
     @EntityGraph(attributePaths = {"owner", "parentPost", "parentPost.owner"})
     List<PostEntity> findByOwnerId(Long owner);
