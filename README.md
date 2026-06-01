@@ -1,6 +1,6 @@
 # Chirp Project
 
-Full-stack веб-приложение. Бэкенд разработан на Spring Boot (Java / Maven), фронтенд — на React/Vue/Angular (JavaScript/TypeScript).
+Full-stack веб-приложение. Бэкенд разработан на Spring Boot (Java / Maven), фронтенд — на React (JavaScript/TypeScript).
 
 ## Предварительные требования
 
@@ -9,6 +9,7 @@ Full-stack веб-приложение. Бэкенд разработан на S
 * **Apache Maven 3.8+**
 * **Node.js** (LTS версия)
 * **PostgreSQL 14+**
+* **Google Chrome** (для запуска без CORS)
 
 ---
 
@@ -32,7 +33,7 @@ Full-stack веб-приложение. Бэкенд разработан на S
 3. В поле имени укажите `chirp_db` и нажмите **Save**.
 
 ### Настройка подключения в бэкенде
-Откройте файл `backend/src/main/resources/application.properties` (или `.yml`) и проверьте параметры подключения:
+Откройте файл `backend/src/main/resources/application.properties` и проверьте параметры подключения:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/chirp_db
 spring.datasource.username=ваш_логин_postgres
@@ -62,9 +63,36 @@ spring.jpa.hibernate.ddl-auto=update
    ```bash
    npm install
    ```
-5. Запустите сервер для разработки:
+5. Запустите сервер для разработки React:
    ```bash
-   npm run dev
+   npm start
    ```
-   *(Примечание: если вы используете Angular, команда может быть `npm start` или `ng serve`)*
-6. Фронтенд станет доступен по адресу, указанному в терминале (обычно http://localhost:3000 или http://localhost:5173).
+   *(или `npm run dev`, если проект инициализирован через Vite)*
+
+---
+
+## 4. Запуск браузера без CORS (Важно)
+
+Поскольку бэкенд и фронтенд работают на разных портах, для тестирования необходимо запустить Google Chrome с отключенной политикой безопасности CORS.
+
+**Перед запуском полностью закройте все открытые окна Chrome!**
+
+### Windows
+Нажмите `Win + R`, вставьте команду и нажмите Enter:
+```cmd
+chrome.exe --user-data-dir="C:/chrome_dev" --disable-web-security
+```
+
+### macOS
+Откройте Терминал и выполните:
+```bash
+open -na "Google Chrome" --args --user-data-dir="/tmp/chrome_dev" --disable-web-security
+```
+
+### Linux
+Откройте Терминал и выполните:
+```bash
+google-chrome --user-data-dir="/tmp/chrome_dev" --disable-web-security
+```
+
+> **Примечание:** В открывшемся окне Chrome появится предупреждение о снижении безопасности. Используйте это окно строго для разработки и тестирования проекта `http://localhost:3000`.
